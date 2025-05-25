@@ -1,0 +1,116 @@
+//! Peekable types
+//!
+//! A `Peekable` is a type that can be used to peek at the current position of a
+//! `Scanner` without advancing the scanner.
+
+use crate::errors::{ParseError, ParseResult};
+use crate::scanner::Scanner;
+
+/// A successful peeking result.
+///
+/// A `Peeking` contains the start and end results of a successful peek, the
+/// length of the end slice, and a reference to the data that was peeked.
+#[derive(Debug)]
+pub struct Peeking<'a, T, S, E> {
+    /// The start of the match.
+    pub start: S,
+    /// The end of the match.
+    pub end: E,
+    /// The length of peeked slice.
+    pub end_slice: usize,
+    /// The data that was peeked.
+    pub data: &'a [T],
+}
+
+/// The result of a peeking operation.
+///
+/// A `PeekResult` contains the result of attempting to match a `Peekable`
+/// against the current position of a `Scanner`. If the match succeeds, a
+/// `Found` is returned with the length of the end slice, the start of the
+/// match, and the end of the match. If the match fails, a `NotFound` is
+/// returned.
+pub enum PeekResult<S, E> {
+    /// The match was successful.
+    Found { end_slice: usize, start: S, end: E },
+    /// The match was unsuccessful.
+    NotFound,
+}
+
+/// A type that can be peeked at the current position of a `Scanner`.
+///
+/// A `Peekable` is a type that can be used to peek at the current position of a
+/// `Scanner`. Implementors of `Peekable` must provide a `peek` method that
+/// attempts to match the `Peekable` against the current position of the
+/// `Scanner`.
+///
+/// # Associated Types
+///
+/// * `S` - The type of the start of the match.
+/// * `E` - The type of the end of the match.
+///
+/// # Required Methods
+///
+/// * `peek` - Attempts to match the `Peekable` against the current position of
+/// the `Scanner`.
+pub trait Peekable<'a, T, S, E> {
+    /// Attempt to match the `Peekable` against the current position of the
+    /// `Scanner`.
+    ///
+    /// This method will temporarily advance the position of the `Scanner` to
+    /// find a match. If a match is found, the `Scanner` is rewound to the
+    /// original position and a `PeekResult` is returned. If no match is found,
+    /// the `Scanner` is rewound to the original position and an `Err` is
+    /// returned.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The `Scanner` to use when matching.
+    ///
+    /// # Returns
+    ///
+    /// A `PeekResult` if the `Peekable` matches the current position of the
+    /// `Scanner`, or an `Err` otherwise.
+    fn peek(&self, data: &mut Scanner<'a, T>) -> ParseResult<PeekResult<S, E>>;
+}
+
+/// Attempt to match a `Peekable` against the current position of a `Scanner`.
+///
+/// This function will temporarily advance the position of the `Scanner` to find
+/// a match. If a match is found, the `Scanner` is rewound to the original
+/// position and a `Peeking` is returned. If no match is found, the `Scanner` is
+/// rewound to the original position and an `Err` is returned.
+///
+/// # Arguments
+///
+/// * `peekable` - The `Peekable` to attempt to match.
+/// * `scanner` - The `Scanner` to use when matching.
+///
+/// # Returns
+///
+/// A `Peeking` if the `Peekable` matches the current position of the `Scanner`,
+/// or an `Err` otherwise.
+pub fn peek<'a, T, S, E, P: Peekable<'a, T, S, E>>(
+    peekable: P,
+    scanner: &'a mut Scanner<'a, T>,
+) -> ParseResult<Peeking<'a, T, S, E>> {
+    let source_cursor = scanner.current_position();
+    match peekable.peek(scanner)? {
+        PeekResult::Found {
+            end_slice,
+            start,
+            end,
+        } => {
+            let data = &scanner.data()[source_cursor..source_cursor + end_slice];
+            Ok(Peeking {
+                start,
+                end,
+                end_slice,
+                data,
+            })
+        }
+        PeekResult::NotFound => {
+            scanner.jump_to(source_cursor);
+            Err(ParseError::UnexpectedToken)
+        }
+    }
+}
