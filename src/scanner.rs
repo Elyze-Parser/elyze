@@ -74,7 +74,7 @@ impl<'a, T> Scanner<'a, T> {
     /// # Returns
     ///
     /// A slice of the data that remains to be scanned.
-    pub fn remaining(&self) -> &[T] {
+    pub fn remaining(&self) -> &'a [T] {
         &self.cursor.get_ref()[self.current_position()..]
     }
 

@@ -2,7 +2,7 @@ use elyze::bytes::matchers::match_number;
 use elyze::bytes::token::Token;
 use elyze::errors::ParseResult;
 use elyze::matcher::{Match, MatchSize};
-use elyze::recognizer::{recognize, Recognizable};
+use elyze::recognizer::{Recognizable, recognize};
 use elyze::scanner::Scanner;
 use elyze::visitor::Visitor;
 

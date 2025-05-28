@@ -18,7 +18,7 @@ impl<'a, 'b, T, S, E> Peeker<'a, 'b, T, S, E> {
     }
 }
 
-impl<'a, 'b, T, S, E> Peeker<'a, 'b, T, S, E> {
+impl<'a, T, S, E> Peeker<'a, '_, T, S, E> {
     /// Add new [Peekable] element to the peeking pool
     pub fn add_peekable<F: Peekable<'a, T, S, E> + 'a>(mut self, peekable: F) -> Self {
         self.peekables.push(Box::new(peekable));
