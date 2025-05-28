@@ -83,8 +83,8 @@ mod tests {
     #[test]
     fn test_peeker() {
         let data = b"data\n";
-        let mut scanner = Scanner::new(data);
-        let peeker = Peeker::new(&mut scanner)
+        let scanner = Scanner::new(data);
+        let peeker = Peeker::new(&scanner)
             .add_peekable(Until::new(Token::Ln))
             .add_peekable(UntilEnd::default());
         let result = peeker
@@ -94,8 +94,8 @@ mod tests {
         assert_eq!(result.data, "data".as_bytes());
 
         let data = b"data";
-        let mut scanner = Scanner::new(data);
-        let peeker = Peeker::new(&mut scanner)
+        let scanner = Scanner::new(data);
+        let peeker = Peeker::new(&scanner)
             .add_peekable(Until::new(Token::Ln))
             .add_peekable(UntilEnd::default());
         let result = peeker

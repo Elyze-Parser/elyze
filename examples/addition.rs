@@ -2,7 +2,7 @@ use elyze::bytes::matchers::match_number;
 use elyze::bytes::token::Token;
 use elyze::errors::ParseResult;
 use elyze::matcher::{Match, MatchSize};
-use elyze::recognizer::{Recognizable, recognize};
+use elyze::recognizer::{Recognizable, recognize_slice};
 use elyze::scanner::Scanner;
 use elyze::visitor::Visitor;
 
@@ -29,7 +29,7 @@ struct Number(usize);
 /// Implement the `Visitor` trait for the token number.
 impl Visitor<'_, u8> for Number {
     fn accept(scanner: &mut Scanner<u8>) -> ParseResult<Self> {
-        let raw_data = recognize(TokenNumber, scanner)?;
+        let raw_data = recognize_slice(TokenNumber, scanner)?;
         let str_data = std::str::from_utf8(raw_data)?;
         let result = str_data.parse::<usize>()?;
         Ok(Number(result))
