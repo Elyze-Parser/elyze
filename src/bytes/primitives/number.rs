@@ -3,7 +3,7 @@
 use crate::bytes::matchers::match_number;
 use crate::errors::ParseResult;
 use crate::matcher::{Match, MatchSize};
-use crate::recognizer::recognize;
+use crate::recognizer::recognize_slice;
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
 
@@ -32,7 +32,7 @@ macro_rules! impl_number {
     ($type:ty) => {
         impl Visitor<'_, u8> for Number<$type> {
             fn accept(scanner: &mut Scanner<u8>) -> ParseResult<Self> {
-                let raw_data = recognize(TokenNumber, scanner)?;
+                let raw_data = recognize_slice(TokenNumber, scanner)?;
                 let str_data = std::str::from_utf8(raw_data)?;
                 let result = str_data.parse::<$type>()?;
                 Ok(Number(result))

@@ -169,7 +169,7 @@ impl MatchSize for TokenNumber {
 fn main() {
     let data = b"123abc";
     let mut scanner = elyze::scanner::Scanner::new(data);
-    let result = TokenNumber.recognize(&mut scanner);
+    let result = TokenNumber.recognize_slice(&mut scanner);
     println!("{:?}", result); // Ok(Some([49, 50, 51]))
     // If the result is successful
     if let Ok(Some(data)) = result {

@@ -25,19 +25,17 @@ pub trait Recognizable<'a, T, V>: MatchSize {
     /// * `Err(ParseError)` if an error occurred
     ///
     fn recognize(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<V>>;
-}
 
-pub trait RecognizeSelf<'a, T, V>: MatchSize {
     /// Try to recognize the object for the given scanner.
     ///
     /// # Arguments
     /// * `scanner` - The scanner to recognize the object for.
     ///
     /// # Returns
-    /// * `Ok(Some(V))` if the object was recognized,
+    /// * `Ok(Some(&[T]))` if the object was recognized,
     /// * `Ok(None)` if the object was not recognized,
     /// * `Err(ParseError)` if an error occurred
-    fn recognize_self(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<V>>;
+    fn recognize_slice(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<&'a [T]>>;
 }
 
 /// Recognize an object for the given scanner.
@@ -71,10 +69,41 @@ pub fn recognize<'a, T, V, R: Recognizable<'a, T, V>>(
         .ok_or(ParseError::UnexpectedToken)
 }
 
+/// Recognize a slice of the object for the given scanner.
+///
+/// # Type Parameters
+/// * `V` - The type of the object to recognize
+/// * `R` - The type of the recognizable object
+///
+/// # Arguments
+/// * `recognizable` - The recognizable object to use for recognition
+/// * `scanner` - The scanner to recognize the object for
+///
+/// # Returns
+/// * `Ok(&'a [T])` if the object was recognized,
+/// * `Err(ParseError)` if an error occurred
+///
+/// This function calls the `recognize_slice` method of the recognizable object
+/// and returns its result. If the recognizable object was not recognized, an
+/// `Err(ParseError::UnexpectedToken)` is returned. If the scanner is at the end
+/// of its input and the recognizable object is longer than the remaining input,
+/// an `Err(ParseError::UnexpectedEndOfInput)` is returned.
+pub fn recognize_slice<'a, T, V, R: Recognizable<'a, T, V>>(
+    recognizable: R,
+    scanner: &mut Scanner<'a, T>,
+) -> ParseResult<&'a [T]> {
+    if recognizable.size() > scanner.remaining().len() {
+        return Err(ParseError::UnexpectedEndOfInput);
+    }
+    recognizable
+        .recognize_slice(scanner)?
+        .ok_or(ParseError::UnexpectedToken)
+}
+
 /// Recognize an object for the given scanner.
-/// Return a slice of the recognized object.
-impl<'a, T, M: Match<T> + MatchSize> RecognizeSelf<'a, T, M> for M {
-    fn recognize_self(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<M>> {
+/// Return the recognized object.
+impl<'a, T, M: Match<T> + MatchSize> Recognizable<'a, T, M> for M {
+    fn recognize(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<M>> {
         // Check if the scanner is empty
         if scanner.is_empty() {
             return Err(ParseError::UnexpectedEndOfInput);
@@ -90,6 +119,26 @@ impl<'a, T, M: Match<T> + MatchSize> RecognizeSelf<'a, T, M> for M {
             scanner.bump_by(size);
         }
         Ok(Some(self))
+    }
+
+    /// Try to recognize the object for the given scanner.
+    /// Return the slice of elements that were recognized.
+    fn recognize_slice(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<&'a [T]>> {
+        // Check if the scanner is empty
+        if scanner.is_empty() {
+            return Err(ParseError::UnexpectedEndOfInput);
+        }
+
+        let data = scanner.remaining();
+
+        let (result, size) = self.matcher(data);
+        if !result {
+            return Ok(None);
+        }
+        if !scanner.is_empty() {
+            scanner.bump_by(size);
+        }
+        Ok(Some(&data[..size]))
     }
 }
 
@@ -111,7 +160,7 @@ pub struct Recognizer<'a, 'container, T, U> {
     scanner: &'container mut Scanner<'a, T>,
 }
 
-impl<'a, 'b, T, R: RecognizeSelf<'a, T, R>> Recognizer<'a, 'b, T, R> {
+impl<'a, 'b, T, R: Recognizable<'a, T, R>> Recognizer<'a, 'b, T, R> {
     /// Create a new `Recognizer` with the given scanner.
     ///
     /// # Arguments
@@ -153,7 +202,7 @@ impl<'a, 'b, T, R: RecognizeSelf<'a, T, R>> Recognizer<'a, 'b, T, R> {
             return Ok(self);
         }
         // Or apply current recognizer
-        if let Some(found) = element.recognize_self(self.scanner)? {
+        if let Some(found) = element.recognize(self.scanner)? {
             self.data = Some(found);
         }
         Ok(self)
@@ -169,45 +218,20 @@ impl<'a, 'b, T, R: RecognizeSelf<'a, T, R>> Recognizer<'a, 'b, T, R> {
     pub fn finish(self) -> Option<R> {
         self.data
     }
-
-    /// Consume the recognizer and return the `U` that was recognized if the
-    /// recognizer was successful, or run the given closure if the recognizer was
-    /// not successful.
-    ///
-    /// # Arguments
-    ///
-    /// * `closure` - A function that takes the `Scanner` and returns a
-    ///   `ParseResult<U>`.
-    ///
-    /// # Returns
-    ///
-    /// If the recognizer was successful (i.e., `data` is `Some`), returns the
-    /// `U` that was recognized. If the recognizer was not successful, the
-    /// `closure` is called with the `Scanner` and the result of the closure is
-    /// returned.
-    pub fn finish_with<F>(self, closure: F) -> ParseResult<R>
-    where
-        F: FnOnce(&mut Scanner<'a, T>) -> ParseResult<R>,
-    {
-        match self.data {
-            None => closure(self.scanner),
-            Some(token) => Ok(token),
-        }
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::bytes::token::Token;
     use crate::errors::ParseResult;
-    use crate::recognizer::{RecognizeSelf, Recognizer};
+    use crate::recognizer::{Recognizable, Recognizer};
 
     #[test]
     fn test_recognizer() {
         let data = b">";
         let mut scanner = crate::scanner::Scanner::new(data);
         let result = Token::GreaterThan
-            .recognize_self(&mut scanner)
+            .recognize(&mut scanner)
             .expect("failed to parse");
         assert_eq!(result, Some(Token::GreaterThan));
     }

@@ -14,17 +14,6 @@ enum YieldResult<V> {
     MaybeNext(V),
 }
 
-impl<T, V, S> SeparatedList<T, V, S> {
-    /// Consume the `SeparatedList` and return an iterator over the elements.
-    ///
-    /// # Returns
-    ///
-    /// An iterator over the elements of the `SeparatedList`.
-    pub fn into_iter(self) -> impl Iterator<Item = V> {
-        self.data.into_iter()
-    }
-}
-
 /// Yield the next element in the list and tell if it's the last one.
 ///
 /// # Type Parameters

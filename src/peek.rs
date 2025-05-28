@@ -5,7 +5,7 @@
 
 use crate::errors::ParseResult;
 use crate::matcher::MatchSize;
-use crate::recognizer::RecognizeSelf;
+use crate::recognizer::Recognizable;
 use crate::scanner::Scanner;
 use std::marker::PhantomData;
 
@@ -160,7 +160,7 @@ impl<'a, T, V> Until<'a, T, V> {
 
 impl<'a, T, V> Peekable<'a, T, V, V> for Until<'a, T, V>
 where
-    V: RecognizeSelf<'a, T, V> + Clone,
+    V: Recognizable<'a, T, V> + Clone,
 {
     /// Peek until the given `element` is found in the `Scanner`.
     ///
@@ -183,7 +183,7 @@ where
         let remaining = &data.data()[data.current_position()..];
         let mut scanner = Scanner::new(remaining);
         while !scanner.is_empty() {
-            match self.element.clone().recognize_self(&mut scanner) {
+            match self.element.clone().recognize(&mut scanner) {
                 Ok(Some(element)) => {
                     return Ok(PeekResult::Found {
                         end_slice: scanner.current_position() - self.element.size(),

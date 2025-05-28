@@ -209,8 +209,10 @@ pub enum GroupKind {
     DoubleQuotes,
 }
 
+type GroupMatcher<'a> = Box<dyn Fn(&'a [u8]) -> ParseResult<PeekResult<Token, Token>> + 'a>;
+
 impl GroupKind {
-    fn matcher<'a>(&self) -> Box<dyn Fn(&'a [u8]) -> ParseResult<PeekResult<Token, Token>> + 'a>
+    fn matcher<'a>(&self) -> GroupMatcher<'a>
 where {
         match self {
             GroupKind::Parenthesis => Box::new(match_group(Token::OpenParen, Token::CloseParen)),
@@ -233,9 +235,9 @@ impl<'a> Peekable<'a, u8, Token, Token> for GroupKind {
 
 #[cfg(test)]
 mod tests {
-    use crate::bytes::components::groups::{GroupKind, match_for_delimited_group, match_group};
+    use crate::bytes::components::groups::{match_for_delimited_group, match_group, GroupKind};
     use crate::bytes::token::Token;
-    use crate::peek::{PeekResult, Peeking, peek};
+    use crate::peek::{peek, PeekResult, Peeking};
     use crate::scanner::Scanner;
 
     #[test]

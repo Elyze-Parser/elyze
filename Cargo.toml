@@ -20,3 +20,6 @@ readme = "Readme.md"
 
 [dependencies]
 thiserror = "2.0.12"
+
+[lints]
+clippy.needless_doctest_main = "allow"

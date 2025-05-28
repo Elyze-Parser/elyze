@@ -3,7 +3,7 @@
 use crate::bytes::matchers::match_string;
 use crate::errors::ParseResult;
 use crate::matcher::{Match, MatchSize};
-use crate::recognizer::recognize;
+use crate::recognizer::recognize_slice;
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
 use std::borrow::Cow;
@@ -29,7 +29,7 @@ macro_rules! impl_string {
     ($type:ty, $a:lifetime) => {
         impl<$a> Visitor<$a, u8> for DataString<$type> {
             fn accept(scanner: &mut Scanner<$a, u8>) -> ParseResult<Self> {
-                let raw_data = recognize(TokenString, scanner)?;
+                let raw_data = recognize_slice(TokenString, scanner)?;
                 let str_data = std::str::from_utf8(raw_data)?;
                 Ok(DataString(str_data.into()))
             }
