@@ -71,7 +71,7 @@ impl<'a, T, V> Acceptor<'a, '_, T, V> {
             Ok(found) => {
                 self.data = Some(transformer(found));
             }
-            Err(ParseError::UnexpectedToken) => {
+            Err(ParseError::UnexpectedToken | ParseError::UnexpectedEndOfInput) => {
                 self.scanner.jump_to(cursor);
             }
             Err(err) => {

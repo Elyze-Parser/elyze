@@ -6,7 +6,7 @@ use elyze::bytes::primitives::whitespace::OptionalWhitespaces;
 use elyze::errors::{ParseError, ParseResult};
 use elyze::matcher::{Match, MatchSize};
 use elyze::peek::peek;
-use elyze::recognizer::{Recognizable, Recognizer};
+use elyze::recognizer::Recognizer;
 use elyze::scanner::Scanner;
 use elyze::visitor::Visitor;
 
@@ -107,19 +107,19 @@ impl MatchSize for BinaryOperator {
     }
 }
 
-impl<'a> Recognizable<'a, u8, BinaryOperator> for BinaryOperator {
-    fn recognize(self, scanner: &mut Scanner<'a, u8>) -> ParseResult<Option<BinaryOperator>> {
-        if scanner.is_empty() {
-            return Ok(None);
-        }
-        let (matched, size) = self.matcher(scanner.remaining());
-        if matched {
-            scanner.bump_by(size);
-            return Ok(Some(self));
-        }
-        Ok(None)
-    }
-}
+// impl<'a> Recognizable<'a, u8, BinaryOperator> for BinaryOperator {
+//     fn recognize(self, scanner: &mut Scanner<'a, u8>) -> ParseResult<Option<BinaryOperator>> {
+//         if scanner.is_empty() {
+//             return Ok(None);
+//         }
+//         let (matched, size) = self.matcher(scanner.remaining());
+//         if matched {
+//             scanner.bump_by(size);
+//             return Ok(Some(self));
+//         }
+//         Ok(None)
+//     }
+// }
 
 // ------------------------------------------------------------
 // Expression

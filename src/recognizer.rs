@@ -75,6 +75,7 @@ pub fn recognize<'a, T, V, R: Recognizable<'a, T, V>>(
 /// Return a slice of the recognized object.
 impl<'a, T, M: Match<T> + MatchSize> RecognizeSelf<'a, T, M> for M {
     fn recognize_self(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<M>> {
+        // Check if the scanner is empty
         if scanner.is_empty() {
             return Err(ParseError::UnexpectedEndOfInput);
         }
@@ -142,6 +143,11 @@ impl<'a, 'b, T, R: RecognizeSelf<'a, T, R>> Recognizer<'a, 'b, T, R> {
     /// rewound to the position at which the `U` was attempted, and `data` is left
     /// `None`.
     pub fn try_or(mut self, element: R) -> ParseResult<Recognizer<'a, 'b, T, R>> {
+        // Check if the scanner is empty
+        if self.scanner.is_empty() {
+            return Err(ParseError::UnexpectedEndOfInput);
+        }
+
         // Propagate result
         if self.data.is_some() {
             return Ok(self);

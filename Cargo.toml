@@ -1,6 +1,6 @@
 [package]
 name = "elyze"
-version = "1.0.2"
+version = "1.0.3"
 edition = "2024"
 homepage = "https://github.com/Elyze-Parser/elyze"
 repository = "https://github.com/Elyze-Parser/elyze"
@@ -16,7 +16,6 @@ keywords = [
     "tokenizer",
 ]
 license = "BSD-3-Clause"
-license-file = "LICENSE"
 readme = "Readme.md"
 
 [dependencies]
