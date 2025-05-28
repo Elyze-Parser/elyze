@@ -1,7 +1,7 @@
 //! Defines how to recognize an object.
 
 use crate::errors::{ParseError, ParseResult};
-use crate::matcher::{Match, MatchSize};
+use crate::matcher::Match;
 use crate::scanner::Scanner;
 
 /// A trait that defines how to recognize an object.
@@ -10,7 +10,7 @@ use crate::scanner::Scanner;
 /// * `V` - The type of the object to recognize
 /// * `T` - The type of the data to scan
 /// * `'a` - The lifetime of the data to scan
-pub trait Recognizable<'a, T, V>: MatchSize {
+pub trait Recognizable<'a, T, V>: Match<T> {
     /// Try to recognize the object for the given scanner.
     ///
     /// # Type Parameters
@@ -102,7 +102,7 @@ pub fn recognize_slice<'a, T, V, R: Recognizable<'a, T, V>>(
 
 /// Recognize an object for the given scanner.
 /// Return the recognized object.
-impl<'a, T, M: Match<T> + MatchSize> Recognizable<'a, T, M> for M {
+impl<'a, T, M: Match<T>> Recognizable<'a, T, M> for M {
     fn recognize(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<M>> {
         // Check if the scanner is empty
         if scanner.is_empty() {
@@ -111,7 +111,7 @@ impl<'a, T, M: Match<T> + MatchSize> Recognizable<'a, T, M> for M {
 
         let data = scanner.remaining();
 
-        let (result, size) = self.matcher(data);
+        let (result, size) = self.is_matching(data);
         if !result {
             return Ok(None);
         }
@@ -131,7 +131,7 @@ impl<'a, T, M: Match<T> + MatchSize> Recognizable<'a, T, M> for M {
 
         let data = scanner.remaining();
 
-        let (result, size) = self.matcher(data);
+        let (result, size) = self.is_matching(data);
         if !result {
             return Ok(None);
         }

@@ -2,7 +2,7 @@
 
 use crate::bytes::matchers::match_string;
 use crate::errors::ParseResult;
-use crate::matcher::{Match, MatchSize};
+use crate::matcher::Match;
 use crate::recognizer::recognize_slice;
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
@@ -11,12 +11,10 @@ use std::borrow::Cow;
 struct TokenString;
 
 impl Match<u8> for TokenString {
-    fn matcher(&self, data: &[u8]) -> (bool, usize) {
+    fn is_matching(&self, data: &[u8]) -> (bool, usize) {
         match_string(data)
     }
-}
 
-impl MatchSize for TokenString {
     fn size(&self) -> usize {
         0
     }

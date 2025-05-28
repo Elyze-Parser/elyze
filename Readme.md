@@ -29,14 +29,11 @@ fn main() {
 }
 ```
 
-## Match and MatchSize
+## Match
 
 Parsing data involves recognizing a pattern in the data.
 
-To help this recognition. The framework provides two traits:
-
-- `Match` : defines how to recognize a pattern
-- `MatchSize` : defines how to get the size of a pattern recognized
+To help this recognition. The framework provides a trait: `Match` which defines how to recognize a pattern
 
 ```rust
 pub trait Match<T> {
@@ -48,10 +45,8 @@ pub trait Match<T> {
     /// # Returns
     /// (true, index) if the data matches the pattern,
     /// (false, index) otherwise
-    fn matcher(&self, data: &[T]) -> (bool, usize);
-}
+    fn is_matching(&self, data: &[T]) -> (bool, usize);
 
-pub trait MatchSize {
     /// Returns the size of the matchable object.
     fn size(&self) -> usize;
 }
@@ -63,12 +58,12 @@ For example, if you want to recognize the turbofish pattern "::<>".
 
 You want that all characters to be matched.
 
-To achieve, we need an object that implements `Match` and `MatchSize`.
+To achieve, we need an object that implements `Match``.
 
 Here the object will be the `Turbofish` struct.
 
 ```rust
-use elyze::matcher::{Match, MatchSize};
+use elyze::matcher::Match;
 
 /// Pattern to match.
 const TURBOFISH: [char; 4] = [':', ':', '<', '>'];
@@ -78,7 +73,7 @@ struct Turbofish;
 
 /// Match turbofish operator.
 impl Match<char> for Turbofish {
-    fn matcher(&self, data: &[char]) -> (bool, usize) {
+    fn is_matching(&self, data: &[char]) -> (bool, usize) {
         let pattern = &TURBOFISH;
         if data.len() < pattern.len() {
             return (false, 0);
@@ -88,10 +83,7 @@ impl Match<char> for Turbofish {
         }
         (false, 0)
     }
-}
 
-/// Return the size of the turbofish operator.
-impl MatchSize for Turbofish {
     fn size(&self) -> usize {
         TURBOFISH.len()
     }
@@ -100,14 +92,14 @@ impl MatchSize for Turbofish {
 fn main() {
     let data = [':', ':', '<', '>'];
     let mut scanner = elyze::scanner::Scanner::new(&data);
-    let result = Turbofish.matcher(&mut scanner);
+    let result = Turbofish.is_matching(&mut scanner);
     println!("{:?}", result);
 }
 ```
 
 ## Recognizable
 
-Once you have an object that implements `Match` and `MatchSize`, you can use it to recognize a pattern.
+Once you have an object that implements `Match`, you can use it to recognize a pattern.
 
 For static data it's not that useful, but for something with not defined it can be interesting.
 
@@ -117,14 +109,14 @@ You need an object able to match a sequence of digits.
 
 Because it's a common operation, the framework provides a builtin function to do it: `match_number`.
 
-As soon an object implements `Match` and `MatchSize`, it also implements `Recognizable` and can be used to recognize a
+As soon an object implements `Match`, it also implements `Recognizable` and can be used to recognize a
 number.
 
 ```rust
-use elyze::matcher::MatchSize;
+use elyze::matcher::Match;
 use elyze::scanner::Scanner;
 use elyze::errors::ParseResult;
-pub trait Recognizable<'a, T, V>: MatchSize {
+pub trait Recognizable<'a, T, V>: Match<T> {
     /// Try to recognize the object for the given scanner.
     ///
     /// # Type Parameters
@@ -146,20 +138,17 @@ pub trait Recognizable<'a, T, V>: MatchSize {
 
 ```rust
 use elyze::bytes::matchers::match_number;
-use elyze::matcher::{Match, MatchSize};
+use elyze::matcher::Match;
 use elyze::recognizer::Recognizable;
 
 struct TokenNumber;
 
 /// Implement the `Match` trait for the token number.
 impl Match<u8> for TokenNumber {
-    fn matcher(&self, data: &[u8]) -> (bool, usize) {
+    fn is_matching(&self, data: &[u8]) -> (bool, usize) {
         match_number(data)
     }
-}
 
-/// Implement the `MatchSize` trait for the token number.
-impl MatchSize for TokenNumber {
     fn size(&self) -> usize {
         // The size of the token number is 0 because it's not defined
         0
@@ -191,7 +180,6 @@ Like the `Recognizable` trait, `Visitor` takes the scanner as an argument and tr
 present or not.
 
 ```rust
-use elyze::matcher::MatchSize;
 use elyze::scanner::Scanner;
 use elyze::errors::ParseResult;
 /// A `Visitor` is a trait that allows to define how to visit a `Scanner`.
@@ -327,7 +315,7 @@ The `Recognizer` allows to check multiple patterns.
 ```rust
 use elyze::bytes::matchers::match_pattern;
 use elyze::errors::{ParseError, ParseResult};
-use elyze::matcher::{Match, MatchSize};
+use elyze::matcher::Match;
 use elyze::recognizer::Recognizer;
 use elyze::scanner::Scanner;
 
@@ -340,15 +328,13 @@ enum OperatorTokens {
 }
 
 impl Match<u8> for OperatorTokens {
-    fn matcher(&self, data: &[u8]) -> (bool, usize) {
+    fn is_matching(&self, data: &[u8]) -> (bool, usize) {
         match self {
             OperatorTokens::Equal => match_pattern(b"==", data),
             OperatorTokens::NotEqual => match_pattern(b"!=", data),
         }
     }
-}
 
-impl MatchSize for OperatorTokens {
     fn size(&self) -> usize {
         match self {
             OperatorTokens::Equal => 2,

@@ -1,18 +1,15 @@
 use elyze::bytes::matchers::match_number;
-use elyze::matcher::{Match, MatchSize};
+use elyze::matcher::Match;
 use elyze::recognizer::Recognizable;
 
 struct TokenNumber;
 
 /// Implement the `Match` trait for the token number.
 impl Match<u8> for TokenNumber {
-    fn matcher(&self, data: &[u8]) -> (bool, usize) {
+    fn is_matching(&self, data: &[u8]) -> (bool, usize) {
         match_number(data)
     }
-}
 
-/// Implement the `MatchSize` trait for the token number.
-impl MatchSize for TokenNumber {
     fn size(&self) -> usize {
         0
     }

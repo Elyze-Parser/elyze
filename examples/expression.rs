@@ -4,7 +4,7 @@ use elyze::bytes::matchers::match_pattern;
 use elyze::bytes::primitives::number::Number;
 use elyze::bytes::primitives::whitespace::OptionalWhitespaces;
 use elyze::errors::{ParseError, ParseResult};
-use elyze::matcher::{Match, MatchSize};
+use elyze::matcher::Match;
 use elyze::peek::peek;
 use elyze::recognizer::Recognizer;
 use elyze::scanner::Scanner;
@@ -90,15 +90,13 @@ enum BinaryOperator {
 }
 
 impl Match<u8> for BinaryOperator {
-    fn matcher(&self, data: &[u8]) -> (bool, usize) {
+    fn is_matching(&self, data: &[u8]) -> (bool, usize) {
         match self {
             BinaryOperator::Add => match_pattern(b"+", data),
             BinaryOperator::Mul => match_pattern(b"*", data),
         }
     }
-}
 
-impl MatchSize for BinaryOperator {
     fn size(&self) -> usize {
         match self {
             BinaryOperator::Add => 1,
