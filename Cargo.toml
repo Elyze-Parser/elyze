@@ -1,10 +1,10 @@
 [package]
 name = "elyze"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2024"
 homepage = "https://github.com/Elyze-Parser/elyze"
 repository = "https://github.com/Elyze-Parser/elyze"
-documentation = "https://docs.rs/elyze"
+documentation = "https://docs.rs/elyze/latest/elyze/"
 authors = [
     "Akanoa <dev@guern.eu>"
 ]
