@@ -1,7 +1,7 @@
 //! Classic tokens
 
 use crate::bytes::matchers::{match_char, match_pattern};
-use crate::matcher::{Match, MatchSize};
+use crate::matcher::Match;
 
 #[derive(Copy, Clone)]
 /// The token type
@@ -76,7 +76,7 @@ pub enum Token {
 }
 
 impl Match<u8> for Token {
-    fn matcher(&self, data: &[u8]) -> (bool, usize) {
+    fn is_matching(&self, data: &[u8]) -> (bool, usize) {
         match self {
             Token::OpenParen => match_char('(', data),
             Token::CloseParen => match_char(')', data),
@@ -113,9 +113,7 @@ impl Match<u8> for Token {
             Token::CrLn => match_pattern(b"\r\n", data),
         }
     }
-}
 
-impl MatchSize for Token {
     fn size(&self) -> usize {
         match self {
             Token::OpenParen => 1,

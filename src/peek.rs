@@ -4,7 +4,7 @@
 //! `Scanner` without advancing the scanner.
 
 use crate::errors::ParseResult;
-use crate::matcher::MatchSize;
+use crate::matcher::Match;
 use crate::recognizer::Recognizable;
 use crate::scanner::Scanner;
 use std::marker::PhantomData;
@@ -27,8 +27,8 @@ pub struct Peeking<'a, T, S, E> {
 
 impl<'a, T, S, E> Peeking<'a, T, S, E>
 where
-    S: MatchSize,
-    E: MatchSize,
+    S: Match<T>,
+    E: Match<T>,
 {
     /// Get a slice of the data that was peeked.
     pub fn peeked_slice(&self) -> &'a [T] {
@@ -217,7 +217,7 @@ pub struct UntilEnd<T>(PhantomData<T>);
 #[cfg(test)]
 mod tests {
     use crate::bytes::token::Token;
-    use crate::peek::{Until, UntilEnd, peek};
+    use crate::peek::{peek, Until, UntilEnd};
 
     #[test]
     fn test_until() {

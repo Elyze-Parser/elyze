@@ -10,11 +10,7 @@ pub trait Match<T> {
     /// # Returns
     /// (true, index) if the data matches the pattern,
     /// (false, index) otherwise
-    fn matcher(&self, data: &[T]) -> (bool, usize);
-}
-
-/// Size of the matchable object.
-pub trait MatchSize {
+    fn is_matching(&self, data: &[T]) -> (bool, usize);
     /// Returns the size of the matchable object.
     fn size(&self) -> usize;
 }

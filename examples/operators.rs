@@ -1,6 +1,6 @@
 use elyze::bytes::matchers::match_pattern;
 use elyze::errors::{ParseError, ParseResult};
-use elyze::matcher::{Match, MatchSize};
+use elyze::matcher::Match;
 use elyze::recognizer::Recognizer;
 use elyze::scanner::Scanner;
 
@@ -13,15 +13,13 @@ enum OperatorTokens {
 }
 
 impl Match<u8> for OperatorTokens {
-    fn matcher(&self, data: &[u8]) -> (bool, usize) {
+    fn is_matching(&self, data: &[u8]) -> (bool, usize) {
         match self {
             OperatorTokens::Equal => match_pattern(b"==", data),
             OperatorTokens::NotEqual => match_pattern(b"!=", data),
         }
     }
-}
 
-impl MatchSize for OperatorTokens {
     fn size(&self) -> usize {
         match self {
             OperatorTokens::Equal => 2,
