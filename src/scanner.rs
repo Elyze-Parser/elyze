@@ -87,15 +87,6 @@ impl<'a, T> Scanner<'a, T> {
         self.cursor.get_ref()
     }
 
-    /// Consume the scanner and return a slice of the remaining data.
-    ///
-    /// # Returns
-    ///
-    /// A slice of the remaining data.
-    pub fn into_data(self) -> &'a [T] {
-        &self.cursor.get_ref()[self.current_position()..]
-    }
-
     /// Return true if there are no more elements to scan, false otherwise.
     ///
     /// # Returns
