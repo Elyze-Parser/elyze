@@ -1,8 +1,8 @@
-use noa_parser::bytes::matchers::match_pattern;
-use noa_parser::errors::{ParseError, ParseResult};
-use noa_parser::matcher::{Match, MatchSize};
-use noa_parser::recognizer::Recognizer;
-use noa_parser::scanner::Scanner;
+use elyze::bytes::matchers::match_pattern;
+use elyze::errors::{ParseError, ParseResult};
+use elyze::matcher::{Match, MatchSize};
+use elyze::recognizer::Recognizer;
+use elyze::scanner::Scanner;
 
 #[derive(Debug)]
 enum OperatorTokens {

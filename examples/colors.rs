@@ -1,12 +1,12 @@
-use noa_parser::acceptor::Acceptor;
-use noa_parser::bytes::primitives::number::Number;
-use noa_parser::bytes::primitives::string::DataString;
-use noa_parser::bytes::token::Token;
-use noa_parser::errors::ParseError::UnexpectedToken;
-use noa_parser::errors::ParseResult;
-use noa_parser::recognizer::recognize;
-use noa_parser::scanner::Scanner;
-use noa_parser::visitor::Visitor;
+use elyze::acceptor::Acceptor;
+use elyze::bytes::primitives::number::Number;
+use elyze::bytes::primitives::string::DataString;
+use elyze::bytes::token::Token;
+use elyze::errors::ParseError::UnexpectedToken;
+use elyze::errors::ParseResult;
+use elyze::recognizer::recognize;
+use elyze::scanner::Scanner;
+use elyze::visitor::Visitor;
 
 #[derive(Debug)]
 struct RgbColor(u8, u8, u8);

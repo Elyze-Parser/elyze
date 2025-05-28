@@ -1,9 +1,9 @@
-use noa_parser::bytes::components::groups::GroupKind;
-use noa_parser::peek::peek;
+use elyze::bytes::components::groups::GroupKind;
+use elyze::peek::peek;
 
 fn main() {
     let data = b"(2 * 3)";
-    let mut scanner = noa_parser::scanner::Scanner::new(data);
+    let mut scanner = elyze::scanner::Scanner::new(data);
     let result = peek(GroupKind::Parenthesis, &mut scanner)
         .expect("failed to parse")
         .expect("failed to peek");

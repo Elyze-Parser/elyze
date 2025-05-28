@@ -1,6 +1,6 @@
-use noa_parser::bytes::matchers::match_number;
-use noa_parser::matcher::{Match, MatchSize};
-use noa_parser::recognizer::Recognizable;
+use elyze::bytes::matchers::match_number;
+use elyze::matcher::{Match, MatchSize};
+use elyze::recognizer::Recognizable;
 
 struct TokenNumber;
 
@@ -20,7 +20,7 @@ impl MatchSize for TokenNumber {
 
 fn main() {
     let data = b"123abc";
-    let mut scanner = noa_parser::scanner::Scanner::new(data);
+    let mut scanner = elyze::scanner::Scanner::new(data);
     let result = TokenNumber.recognize(&mut scanner);
     println!("{:?}", result); // Ok(Some([49, 50, 51]))
     // If the result is successful

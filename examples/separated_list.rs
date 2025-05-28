@@ -1,16 +1,16 @@
-use noa_parser::bytes::primitives::number::Number;
-use noa_parser::bytes::token::Token;
-use noa_parser::errors::ParseResult;
-use noa_parser::recognizer::recognize;
-use noa_parser::scanner::Scanner;
-use noa_parser::separated_list::SeparatedList;
-use noa_parser::visitor::Visitor;
+use elyze::bytes::primitives::number::Number;
+use elyze::bytes::token::Token;
+use elyze::errors::ParseResult;
+use elyze::recognizer::recognize;
+use elyze::scanner::Scanner;
+use elyze::separated_list::SeparatedList;
+use elyze::visitor::Visitor;
 
 #[derive(Debug)]
 struct Separator;
 
 impl<'a> Visitor<'a, u8> for Separator {
-    fn accept(scanner: &mut noa_parser::scanner::Scanner<u8>) -> ParseResult<Self> {
+    fn accept(scanner: &mut elyze::scanner::Scanner<u8>) -> ParseResult<Self> {
         recognize(Token::Tilde, scanner)?;
         recognize(Token::Tilde, scanner)?;
         recognize(Token::Tilde, scanner)?;

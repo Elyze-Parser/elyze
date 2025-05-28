@@ -1,8 +1,8 @@
-use noa_parser::bytes::primitives::number::Number;
-use noa_parser::bytes::token::Token;
-use noa_parser::errors::ParseResult;
-use noa_parser::recognizer::recognize;
-use noa_parser::visitor::Visitor;
+use elyze::bytes::primitives::number::Number;
+use elyze::bytes::token::Token;
+use elyze::errors::ParseResult;
+use elyze::recognizer::recognize;
+use elyze::visitor::Visitor;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -10,7 +10,7 @@ struct Turbofish(usize);
 
 // Implement the `Visitor` trait for the turbofish operator.
 impl<'a> Visitor<'a, u8> for Turbofish {
-    fn accept(scanner: &mut noa_parser::scanner::Scanner<u8>) -> ParseResult<Self> {
+    fn accept(scanner: &mut elyze::scanner::Scanner<u8>) -> ParseResult<Self> {
         // recognize the turbofish operator start "::<".
         recognize(Token::Colon, scanner)?;
         recognize(Token::Colon, scanner)?;
@@ -25,7 +25,7 @@ impl<'a> Visitor<'a, u8> for Turbofish {
 
 fn main() {
     let data = b"::<45>garbage";
-    let mut scanner = noa_parser::scanner::Scanner::new(data);
+    let mut scanner = elyze::scanner::Scanner::new(data);
     let result = Turbofish::accept(&mut scanner);
     println!("{:?}", result); // Ok(Turbofish(45))
 }

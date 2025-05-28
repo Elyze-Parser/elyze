@@ -1,14 +1,14 @@
-use noa_parser::acceptor::Acceptor;
-use noa_parser::bytes::components::groups::GroupKind;
-use noa_parser::bytes::matchers::match_pattern;
-use noa_parser::bytes::primitives::number::Number;
-use noa_parser::bytes::primitives::whitespace::OptionalWhitespaces;
-use noa_parser::errors::{ParseError, ParseResult};
-use noa_parser::matcher::{Match, MatchSize};
-use noa_parser::peek::peek;
-use noa_parser::recognizer::{Recognizable, Recognizer};
-use noa_parser::scanner::Scanner;
-use noa_parser::visitor::Visitor;
+use elyze::acceptor::Acceptor;
+use elyze::bytes::components::groups::GroupKind;
+use elyze::bytes::matchers::match_pattern;
+use elyze::bytes::primitives::number::Number;
+use elyze::bytes::primitives::whitespace::OptionalWhitespaces;
+use elyze::errors::{ParseError, ParseResult};
+use elyze::matcher::{Match, MatchSize};
+use elyze::peek::peek;
+use elyze::recognizer::{Recognizable, Recognizer};
+use elyze::scanner::Scanner;
+use elyze::visitor::Visitor;
 
 // ------------------------------------------------------------
 // ExpressionInternal

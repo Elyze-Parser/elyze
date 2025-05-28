@@ -1,14 +1,14 @@
 [package]
-name = "noa-parser"
-version = "0.7.4"
+name = "elyze"
+version = "1.0.0"
 edition = "2024"
-homepage = "https://github.com/Akanoa/noa-parser"
-repository = "https://github.com/Akanoa/noa-parser"
-documentation = "https://docs.rs/noa-parser"
+homepage = "https://github.com/Elyze-Parser/elyzee"
+repository = "https://github.com/Elyze-Parser/elyze"
+documentation = "https://docs.rs/elyze"
 authors = [
     "Akanoa <dev@guern.eu>"
 ]
-description = "Noa parser is an extensible general purpose framework parser allowing to parser any type of data without allocation."
+description = "Elyze is an extensible general purpose framework parser allowing to parser any type of data without allocation."
 publish = true
 keywords = [
     "parser",

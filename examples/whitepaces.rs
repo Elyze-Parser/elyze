@@ -1,8 +1,8 @@
-use noa_parser::bytes::primitives::string::DataString;
-use noa_parser::bytes::primitives::whitespace::Whitespaces;
-use noa_parser::errors::ParseResult;
-use noa_parser::scanner::Scanner;
-use noa_parser::visitor::Visitor;
+use elyze::bytes::primitives::string::DataString;
+use elyze::bytes::primitives::whitespace::Whitespaces;
+use elyze::errors::ParseResult;
+use elyze::scanner::Scanner;
+use elyze::visitor::Visitor;
 
 #[derive(Debug)]
 #[allow(dead_code)]

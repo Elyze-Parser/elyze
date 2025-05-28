@@ -1,4 +1,4 @@
-# Noa parser
+# Elyze
 
 Is an extensible general purpose framework parser allowing to parser any type of data without allocation.
 
@@ -22,7 +22,7 @@ Parsers only use most of the operations internally.
 ### Usage
 
 ```rust
-use noa_parser::scanner::Scanner;
+use elyze::scanner::Scanner;
 fn main() {
     let data = b"hello world";
     let mut scanner = Scanner::new(data);
@@ -68,7 +68,7 @@ To achieve, we need an object that implements `Match` and `MatchSize`.
 Here the object will be the `Turbofish` struct.
 
 ```rust
-use noa_parser::matcher::{Match, MatchSize};
+use elyze::matcher::{Match, MatchSize};
 
 /// Pattern to match.
 const TURBOFISH: [char; 4] = [':', ':', '<', '>'];
@@ -99,7 +99,7 @@ impl MatchSize for Turbofish {
 
 fn main() {
     let data = [':', ':', '<', '>'];
-    let mut scanner = noa_parser::scanner::Scanner::new(&data);
+    let mut scanner = elyze::scanner::Scanner::new(&data);
     let result = Turbofish.matcher(&mut scanner);
     println!("{:?}", result);
 }
@@ -121,9 +121,9 @@ As soon an object implements `Match` and `MatchSize`, it also implements `Recogn
 number.
 
 ```rust
-use noa_parser::matcher::MatchSize;
-use noa_parser::scanner::Scanner;
-use noa_parser::errors::ParseResult;
+use elyze::matcher::MatchSize;
+use elyze::scanner::Scanner;
+use elyze::errors::ParseResult;
 pub trait Recognizable<'a, T, V>: MatchSize {
     /// Try to recognize the object for the given scanner.
     ///
@@ -145,9 +145,9 @@ pub trait Recognizable<'a, T, V>: MatchSize {
 ### Usage
 
 ```rust
-use noa_parser::bytes::matchers::match_number;
-use noa_parser::matcher::{Match, MatchSize};
-use noa_parser::recognizer::Recognizable;
+use elyze::bytes::matchers::match_number;
+use elyze::matcher::{Match, MatchSize};
+use elyze::recognizer::Recognizable;
 
 struct TokenNumber;
 
@@ -168,7 +168,7 @@ impl MatchSize for TokenNumber {
 
 fn main() {
     let data = b"123abc";
-    let mut scanner = noa_parser::scanner::Scanner::new(data);
+    let mut scanner = elyze::scanner::Scanner::new(data);
     let result = TokenNumber.recognize(&mut scanner);
     println!("{:?}", result); // Ok(Some([49, 50, 51]))
     // If the result is successful
@@ -191,9 +191,9 @@ Like the `Recognizable` trait, `Visitor` takes the scanner as an argument and tr
 present or not.
 
 ```rust
-use noa_parser::matcher::MatchSize;
-use noa_parser::scanner::Scanner;
-use noa_parser::errors::ParseResult;
+use elyze::matcher::MatchSize;
+use elyze::scanner::Scanner;
+use elyze::errors::ParseResult;
 /// A `Visitor` is a trait that allows to define how to visit a `Scanner`.
 ///
 /// When a `Visitor` is used on a `Scanner`, it will consume the input from the
@@ -233,18 +233,18 @@ then the end of the turbofish operator ">".
 The recognition of the number is done by calling the `accept` method of the `Number` object.
 
 ```rust
-use noa_parser::bytes::primitives::number::Number;
-use noa_parser::bytes::token::Token;
-use noa_parser::errors::ParseResult;
-use noa_parser::recognizer::recognize;
-use noa_parser::visitor::Visitor;
+use elyze::bytes::primitives::number::Number;
+use elyze::bytes::token::Token;
+use elyze::errors::ParseResult;
+use elyze::recognizer::recognize;
+use elyze::visitor::Visitor;
 
 #[derive(Debug)]
 struct Turbofish(usize);
 
 // Implement the `Visitor` trait for the turbofish operator.
 impl<'a> Visitor<'a, u8> for Turbofish {
-    fn accept(scanner: &mut noa_parser::scanner::Scanner<u8>) -> ParseResult<Self> {
+    fn accept(scanner: &mut elyze::scanner::Scanner<u8>) -> ParseResult<Self> {
         // recognize the turbofish operator start "::<".
         recognize(Token::Colon, scanner)?;
         recognize(Token::Colon, scanner)?;
@@ -260,7 +260,7 @@ impl<'a> Visitor<'a, u8> for Turbofish {
 
 fn main() {
     let data = b"::<45>garbage";
-    let mut scanner = noa_parser::scanner::Scanner::new(data);
+    let mut scanner = elyze::scanner::Scanner::new(data);
     let result = Turbofish::accept(&mut scanner);
     println!("{:?}", result); // Ok(Turbofish(45))
 }
@@ -269,12 +269,12 @@ fn main() {
 If you want you can embed the turbofish operator start pattern inside its own `Visitor`.
 
 ```rust
-use noa_parser::visitor::Visitor;
-use noa_parser::scanner::Scanner;
-use noa_parser::errors::ParseResult;
-use noa_parser::recognizer::recognize;
-use noa_parser::bytes::token::Token;
-use noa_parser::bytes::primitives::number::Number;
+use elyze::visitor::Visitor;
+use elyze::scanner::Scanner;
+use elyze::errors::ParseResult;
+use elyze::recognizer::recognize;
+use elyze::bytes::token::Token;
+use elyze::bytes::primitives::number::Number;
 
 #[derive(Debug)]
 struct Turbofish(usize);
@@ -294,7 +294,7 @@ impl<'a> Visitor<'a, u8> for TurbofishStartTokens {
 
 // Implement the `Visitor` trait for the turbofish operator.
 impl<'a> Visitor<'a, u8> for Turbofish {
-    fn accept(scanner: &mut noa_parser::scanner::Scanner<u8>) -> ParseResult<Self> {
+    fn accept(scanner: &mut elyze::scanner::Scanner<u8>) -> ParseResult<Self> {
         // recognize the turbofish operator start "::<".
         TurbofishStartTokens::accept(scanner)?;
         // recognize the number
@@ -308,7 +308,7 @@ impl<'a> Visitor<'a, u8> for Turbofish {
 
 fn main() {
     let data = b"::<45>garbage";
-    let mut scanner = noa_parser::scanner::Scanner::new(data);
+    let mut scanner = elyze::scanner::Scanner::new(data);
     let result = Turbofish::accept(&mut scanner);
     println!("{:?}", result); // Ok(Turbofish(45))
 }
@@ -325,11 +325,11 @@ You may need to recognize an operator, for example.
 The `Recognizer` allows to check multiple patterns.
 
 ```rust
-use noa_parser::bytes::matchers::match_pattern;
-use noa_parser::errors::{ParseError, ParseResult};
-use noa_parser::matcher::{Match, MatchSize};
-use noa_parser::recognizer::Recognizer;
-use noa_parser::scanner::Scanner;
+use elyze::bytes::matchers::match_pattern;
+use elyze::errors::{ParseError, ParseResult};
+use elyze::matcher::{Match, MatchSize};
+use elyze::recognizer::Recognizer;
+use elyze::scanner::Scanner;
 
 #[derive(Debug)]
 enum OperatorTokens {
@@ -575,12 +575,12 @@ The framework provides two `Peekable` implementations:
 - `UntilEnd` : A group until the end of the input
 
 ```rust
-use noa_parser::bytes::components::groups::GroupKind;
-use noa_parser::peek::peek;
+use elyze::bytes::components::groups::GroupKind;
+use elyze::peek::peek;
 
 fn main() {
     let data = b"(2 * 3)";
-    let mut scanner = noa_parser::scanner::Scanner::new(data);
+    let mut scanner = elyze::scanner::Scanner::new(data);
     let result = peek(GroupKind::Parenthesis, &mut scanner).expect("failed to parse").expect("failed to peek");
     println!(
         "{}",
@@ -607,19 +607,19 @@ The `SeparatedList` takes two `Visitor` as type parameters:
 Once one of parsers fails, the `SeparatedList` will stop parsing the list and return the result.
 
 ```rust
-use noa_parser::bytes::primitives::number::Number;
-use noa_parser::bytes::token::Token;
-use noa_parser::errors::ParseResult;
-use noa_parser::recognizer::recognize;
-use noa_parser::scanner::Scanner;
-use noa_parser::separated_list::SeparatedList;
-use noa_parser::visitor::Visitor;
+use elyze::bytes::primitives::number::Number;
+use elyze::bytes::token::Token;
+use elyze::errors::ParseResult;
+use elyze::recognizer::recognize;
+use elyze::scanner::Scanner;
+use elyze::separated_list::SeparatedList;
+use elyze::visitor::Visitor;
 
 #[derive(Debug)]
 struct Separator;
 
 impl<'a> Visitor<'a, u8> for Separator {
-    fn accept(scanner: &mut noa_parser::scanner::Scanner<u8>) -> ParseResult<Self> {
+    fn accept(scanner: &mut elyze::scanner::Scanner<u8>) -> ParseResult<Self> {
         recognize(Token::Tilde, scanner)?;
         recognize(Token::Tilde, scanner)?;
         recognize(Token::Tilde, scanner)?;

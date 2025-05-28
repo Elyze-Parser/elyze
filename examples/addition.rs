@@ -1,10 +1,10 @@
-use noa_parser::bytes::matchers::match_number;
-use noa_parser::bytes::token::Token;
-use noa_parser::errors::ParseResult;
-use noa_parser::matcher::{Match, MatchSize};
-use noa_parser::recognizer::{Recognizable, recognize};
-use noa_parser::scanner::Scanner;
-use noa_parser::visitor::Visitor;
+use elyze::bytes::matchers::match_number;
+use elyze::bytes::token::Token;
+use elyze::errors::ParseResult;
+use elyze::matcher::{Match, MatchSize};
+use elyze::recognizer::{recognize, Recognizable};
+use elyze::scanner::Scanner;
+use elyze::visitor::Visitor;
 
 /// The token number which recognizes numbers.
 struct TokenNumber;
