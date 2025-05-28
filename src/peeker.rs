@@ -26,7 +26,7 @@ impl<'a, T, S, E> Peeker<'a, '_, T, S, E> {
     }
 
     /// Run the [Forecast] pool, find the minimal group
-    pub fn peek(self) -> ParseResult<Option<Peeking<'b, T, S, E>>> {
+    pub fn peek(self) -> ParseResult<Option<Peeking<'a, T, S, E>>> {
         let mut result = None;
         // on boucle sur les possibilités de prédictions
         for peekable in self.peekables.into_iter() {
