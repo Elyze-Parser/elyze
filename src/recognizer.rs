@@ -61,9 +61,6 @@ pub fn recognize<'a, T, V, R: Recognizable<'a, T, V>>(
     recognizable: R,
     scanner: &mut Scanner<'a, T>,
 ) -> ParseResult<V> {
-    if recognizable.size() > scanner.remaining().len() {
-        return Err(ParseError::UnexpectedEndOfInput);
-    }
     recognizable
         .recognize(scanner)?
         .ok_or(ParseError::UnexpectedToken)
@@ -88,13 +85,13 @@ pub fn recognize<'a, T, V, R: Recognizable<'a, T, V>>(
 /// `Err(ParseError::UnexpectedToken)` is returned. If the scanner is at the end
 /// of its input and the recognizable object is longer than the remaining input,
 /// an `Err(ParseError::UnexpectedEndOfInput)` is returned.
-pub fn recognize_slice<'a, T, V, R: Recognizable<'a, T, V>>(
+pub fn recognize_slice<'a, T, V, R>(
     recognizable: R,
     scanner: &mut Scanner<'a, T>,
-) -> ParseResult<&'a [T]> {
-    if recognizable.size() > scanner.remaining().len() {
-        return Err(ParseError::UnexpectedEndOfInput);
-    }
+) -> ParseResult<&'a [T]>
+where
+    R: Recognizable<'a, T, V>,
+{
     recognizable
         .recognize_slice(scanner)?
         .ok_or(ParseError::UnexpectedToken)
@@ -104,8 +101,8 @@ pub fn recognize_slice<'a, T, V, R: Recognizable<'a, T, V>>(
 /// Return the recognized object.
 impl<'a, T, M: Match<T>> Recognizable<'a, T, M> for M {
     fn recognize(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<M>> {
-        // Check if the scanner is empty
-        if scanner.is_empty() {
+        // check if the scanner has enough data
+        if self.size() > scanner.remaining().len() {
             return Err(ParseError::UnexpectedEndOfInput);
         }
 
