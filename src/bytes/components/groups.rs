@@ -79,7 +79,7 @@ where
 pub fn match_group<'a, V1, T1, V2, T2>(
     start: T1,
     end: T2,
-) -> impl Fn(&'a [u8]) -> ParseResult<PeekResult<T1, T2>> + 'a
+) -> impl Fn(&'a [u8]) -> ParseResult<PeekResult> + 'a
 where
     T1: Recognizable<'a, u8, V1> + Copy + 'a,
     T2: Recognizable<'a, u8, V2> + Copy + 'a,
@@ -107,8 +107,8 @@ where
 
         Ok(PeekResult::Found {
             end_slice: tokenizer.current_position(),
-            start,
-            end,
+            start_element_size: start.size(),
+            end_element_size: end.size(),
         })
     }
 }
@@ -138,7 +138,7 @@ where
 pub fn match_for_delimited_group<'a, V, T, V2, T2>(
     token: T,
     escape_token: T2,
-) -> impl Fn(&'a [u8]) -> ParseResult<PeekResult<T, T>> + 'a
+) -> impl Fn(&'a [u8]) -> ParseResult<PeekResult> + 'a
 where
     T: Recognizable<'a, u8, V> + Copy + 'a,
     T2: Recognizable<'a, u8, V2> + Copy + 'a,
@@ -191,8 +191,8 @@ where
 
         Ok(PeekResult::Found {
             end_slice: tokenizer.current_position(),
-            start: token,
-            end: token,
+            start_element_size: token.size(),
+            end_element_size: token.size(),
         })
     }
 }
@@ -209,7 +209,7 @@ pub enum GroupKind {
     DoubleQuotes,
 }
 
-type GroupMatcher<'a> = Box<dyn Fn(&'a [u8]) -> ParseResult<PeekResult<Token, Token>> + 'a>;
+type GroupMatcher<'a> = Box<dyn Fn(&'a [u8]) -> ParseResult<PeekResult> + 'a>;
 
 impl GroupKind {
     fn matcher<'a>(&self) -> GroupMatcher<'a>
@@ -227,8 +227,8 @@ where {
     }
 }
 
-impl<'a> Peekable<'a, u8, Token, Token> for GroupKind {
-    fn peek(&self, data: &Scanner<'a, u8>) -> ParseResult<PeekResult<Token, Token>> {
+impl<'a> Peekable<'a, u8> for GroupKind {
+    fn peek(&self, data: &Scanner<'a, u8>) -> ParseResult<PeekResult> {
         self.matcher()(data.remaining())
     }
 }
@@ -249,8 +249,8 @@ mod tests {
             result,
             PeekResult::Found {
                 end_slice: 22,
-                start: Token::OpenParen,
-                end: Token::CloseParen
+                start_element_size: 1,
+                end_element_size: 1
             }
         );
         assert_eq!(&data[..22], b"( 5 + 3 - ( 10 * 8 ) )");
@@ -264,8 +264,8 @@ mod tests {
         assert_eq!(
             result,
             Some(Peeking {
-                start: Token::OpenParen,
-                end: Token::CloseParen,
+                start_element_size: 1,
+                end_element_size: 1,
                 data: &data[0..22],
                 end_slice: 22
             })
@@ -282,8 +282,8 @@ mod tests {
             result,
             PeekResult::Found {
                 end_slice: 13,
-                start: Token::Quote,
-                end: Token::Quote
+                start_element_size: 1,
+                end_element_size: 1
             }
         );
         assert_eq!(&data[..13], b"'hello world'");
@@ -295,8 +295,8 @@ mod tests {
             result,
             PeekResult::Found {
                 end_slice: 27,
-                start: Token::Quote,
-                end: Token::Quote
+                start_element_size: 1,
+                end_element_size: 1
             }
         );
         assert_eq!(&data[..27], r#"'hello world l\'éléphant'"#);
@@ -309,8 +309,8 @@ mod tests {
             result,
             PeekResult::Found {
                 end_slice: 13,
-                start: Token::DoubleQuote,
-                end: Token::DoubleQuote
+                start_element_size: 1,
+                end_element_size: 1
             }
         );
         assert_eq!(&data[..13], "\"hello world\"");
@@ -323,8 +323,8 @@ mod tests {
             result,
             PeekResult::Found {
                 end_slice: 13,
-                start: Token::DoubleQuote,
-                end: Token::DoubleQuote
+                start_element_size: 1,
+                end_element_size: 1
             }
         );
         assert_eq!(&data[..13], r#""hello world""#);

@@ -4,59 +4,13 @@
 //! `Scanner` without advancing the scanner.
 
 use crate::errors::ParseResult;
-use crate::matcher::Match;
 use crate::recognizer::Recognizable;
 use crate::scanner::Scanner;
 use std::marker::PhantomData;
 
-/// A successful peeking result.
-///
-/// A `Peeking` contains the start and end results of a successful peek, the
-/// length of the end slice, and a reference to the data that was peeked.
-#[derive(Debug, PartialEq)]
-pub struct Peeking<'a, T, S, E> {
-    /// The start of the match.
-    pub start: S,
-    /// The end of the match.
-    pub end: E,
-    /// The length of peeked slice.
-    pub end_slice: usize,
-    /// The data that was peeked.
-    pub data: &'a [T],
-}
-
-impl<'a, T, S, E> Peeking<'a, T, S, E>
-where
-    S: Match<T>,
-    E: Match<T>,
-{
-    /// Get a slice of the data that was peeked.
-    pub fn peeked_slice(&self) -> &'a [T] {
-        &self.data[self.start.size()..self.end_slice - self.end.size()]
-    }
-
-    /// Get the data that was peeked.
-    ///
-    /// Returns a reference to the underlying data that was peeked.
-    pub fn data(&self) -> &'a [T] {
-        self.data
-    }
-}
-
-/// The result of a peeking operation.
-///
-/// A `PeekResult` contains the result of attempting to match a `Peekable`
-/// against the current position of a `Scanner`. If the match succeeds, a
-/// `Found` is returned with the length of the end slice, the start of the
-/// match, and the end of the match. If the match fails, a `NotFound` is
-/// returned.
-#[derive(PartialEq, Debug)]
-pub enum PeekResult<S, E> {
-    /// The match was successful.
-    Found { end_slice: usize, start: S, end: E },
-    /// The match was unsuccessful.
-    NotFound,
-}
+//------------------------------------------------------------------------------
+// Peekable
+//------------------------------------------------------------------------------
 
 /// A type that can be peeked at the current position of a `Scanner`.
 ///
@@ -65,16 +19,11 @@ pub enum PeekResult<S, E> {
 /// attempts to match the `Peekable` against the current position of the
 /// `Scanner`.
 ///
-/// # Associated Types
-///
-/// * `S` - The type of the start of the match.
-/// * `E` - The type of the end of the match.
-///
 /// # Required Methods
 ///
 /// * `peek` - Attempts to match the `Peekable` against the current position of
 ///   the `Scanner`.
-pub trait Peekable<'a, T, S, E> {
+pub trait Peekable<'a, T> {
     /// Attempt to match the `Peekable` against the current position of the
     /// `Scanner`.
     ///
@@ -92,8 +41,72 @@ pub trait Peekable<'a, T, S, E> {
     ///
     /// A `PeekResult` if the `Peekable` matches the current position of the
     /// `Scanner`, or an `Err` otherwise.
-    fn peek(&self, data: &Scanner<'a, T>) -> ParseResult<PeekResult<S, E>>;
+    fn peek(&self, data: &Scanner<'a, T>) -> ParseResult<PeekResult>;
 }
+
+//------------------------------------------------------------------------------
+// Peeking
+//------------------------------------------------------------------------------
+
+/// A successful peeking result.
+///
+/// A `Peeking` contains the start and end results of a successful peek, the
+/// length of the end slice, and a reference to the data that was peeked.
+#[derive(Debug, PartialEq)]
+pub struct Peeking<'a, T> {
+    /// The start of the match.
+    pub start_element_size: usize,
+    /// The end of the match.
+    pub end_element_size: usize,
+    /// The length of peeked slice.
+    pub end_slice: usize,
+    /// The data that was peeked.
+    pub data: &'a [T],
+}
+
+impl<'a, T> Peeking<'a, T> {
+    /// Get a slice of the data that was peeked.
+    pub fn peeked_slice(&self) -> &'a [T] {
+        &self.data[self.start_element_size..self.end_slice - self.end_element_size]
+    }
+
+    /// Get the data that was peeked.
+    ///
+    /// Returns a reference to the underlying data that was peeked.
+    pub fn data(&self) -> &'a [T] {
+        self.data
+    }
+}
+
+//------------------------------------------------------------------------------
+// PeekResult
+//------------------------------------------------------------------------------
+
+/// The result of a peeking operation.
+///
+/// A `PeekResult` contains the result of attempting to match a `Peekable`
+/// against the current position of a `Scanner`. If the match succeeds, a
+/// `Found` is returned with the length of the end slice, the start of the
+/// match, and the end of the match. If the match fails, a `NotFound` is
+/// returned.
+#[derive(PartialEq, Debug)]
+pub enum PeekResult {
+    /// The match was successful.
+    Found {
+        // The last index of the end slice
+        end_slice: usize,
+        // The size of the start element
+        start_element_size: usize,
+        // The size of the end element
+        end_element_size: usize,
+    },
+    /// The match was unsuccessful.
+    NotFound,
+}
+
+//------------------------------------------------------------------------------
+// peek function
+//------------------------------------------------------------------------------
 
 /// Attempt to match a `Peekable` against the current position of a `Scanner`.
 ///
@@ -111,21 +124,21 @@ pub trait Peekable<'a, T, S, E> {
 ///
 /// A `Peeking` if the `Peekable` matches the current position of the `Scanner`,
 /// or an `Err` otherwise.
-pub fn peek<'a, T, S, E, P: Peekable<'a, T, S, E>>(
+pub fn peek<'a, T, P: Peekable<'a, T>>(
     peekable: P,
     scanner: &mut Scanner<'a, T>,
-) -> ParseResult<Option<Peeking<'a, T, S, E>>> {
+) -> ParseResult<Option<Peeking<'a, T>>> {
     let source_cursor = scanner.current_position();
     match peekable.peek(scanner)? {
         PeekResult::Found {
             end_slice,
-            start,
-            end,
+            start_element_size: start,
+            end_element_size: end,
         } => {
             let data = &scanner.data()[source_cursor..source_cursor + end_slice];
             Ok(Some(Peeking {
-                start,
-                end,
+                start_element_size: start,
+                end_element_size: end,
                 end_slice,
                 data,
             }))
@@ -136,6 +149,10 @@ pub fn peek<'a, T, S, E, P: Peekable<'a, T, S, E>>(
         }
     }
 }
+
+//------------------------------------------------------------------------------
+// Until implementations
+//------------------------------------------------------------------------------
 
 /// A `Peekable` that peeks until the given `element` is found in the
 /// `Scanner`.
@@ -158,7 +175,7 @@ impl<'a, T, V> Until<'a, T, V> {
     }
 }
 
-impl<'a, T, V> Peekable<'a, T, V, V> for Until<'a, T, V>
+impl<'a, T, V> Peekable<'a, T> for Until<'a, T, V>
 where
     V: Recognizable<'a, T, V> + Clone,
 {
@@ -178,7 +195,7 @@ where
     ///
     /// A `PeekResult` if the `element` matches the current position of the
     /// `Scanner`, or an `Err` otherwise.
-    fn peek(&self, data: &Scanner<'a, T>) -> ParseResult<PeekResult<V, V>> {
+    fn peek(&self, data: &Scanner<'a, T>) -> ParseResult<PeekResult> {
         // create a temporary scanner to peek data
         let remaining = &data.data()[data.current_position()..];
         let mut scanner = Scanner::new(remaining);
@@ -187,8 +204,8 @@ where
                 Ok(Some(element)) => {
                     return Ok(PeekResult::Found {
                         end_slice: scanner.current_position() - self.element.size(),
-                        start: element.clone(),
-                        end: element.clone(),
+                        start_element_size: 0,
+                        end_element_size: element.size(),
                     });
                 }
                 Ok(None) => {
@@ -204,6 +221,10 @@ where
         Ok(PeekResult::NotFound)
     }
 }
+
+//------------------------------------------------------------------------------
+// UntilEnd implementations
+//------------------------------------------------------------------------------
 
 /// A `Peekable` that peeks until the end of the `Scanner`.
 ///

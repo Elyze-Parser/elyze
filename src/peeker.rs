@@ -3,13 +3,13 @@ use crate::peek::{PeekResult, Peekable, Peeking};
 use crate::scanner::Scanner;
 
 /// A [Peeker] is a type that is used to find the best group to forecast
-pub struct Peeker<'a, 'b, T, S, E> {
+pub struct Peeker<'a, 'b, T> {
     scanner: &'b Scanner<'a, T>,
     /// Pool of [Peekable]
-    peekables: Vec<Box<dyn Peekable<'a, T, S, E> + 'a>>,
+    peekables: Vec<Box<dyn Peekable<'a, T> + 'a>>,
 }
 
-impl<'a, 'b, T, S, E> Peeker<'a, 'b, T, S, E> {
+impl<'a, 'b, T> Peeker<'a, 'b, T> {
     pub fn new(scanner: &'b Scanner<'a, T>) -> Self {
         Self {
             scanner,
@@ -18,54 +18,54 @@ impl<'a, 'b, T, S, E> Peeker<'a, 'b, T, S, E> {
     }
 }
 
-impl<'a, T, S, E> Peeker<'a, '_, T, S, E> {
+impl<'a, T> Peeker<'a, '_, T> {
     /// Add new [Peekable] element to the peeking pool
-    pub fn add_peekable<F: Peekable<'a, T, S, E> + 'a>(mut self, peekable: F) -> Self {
+    pub fn add_peekable<F: Peekable<'a, T> + 'a>(mut self, peekable: F) -> Self {
         self.peekables.push(Box::new(peekable));
         self
     }
 
     /// Run the [Forecast] pool, find the minimal group
-    pub fn peek(self) -> ParseResult<Option<Peeking<'a, T, S, E>>> {
+    pub fn peek(self) -> ParseResult<Option<Peeking<'a, T>>> {
         let mut result = None;
-        // on boucle sur les possibilités de prédictions
+        // loop on the possibilities of predictions
         for peekable in self.peekables.into_iter() {
             let peek_result = peekable.peek(self.scanner)?;
-            // on tente de prédire l'élément
+            // we try to predict the element
             match peek_result {
-                // si l'on a trouvé quelque chose
+                // if we have found something
                 PeekResult::Found {
-                    start,
-                    end,
+                    start_element_size: start,
+                    end_element_size: end,
                     end_slice,
                 } => {
-                    // on récupère le groupe prédit
+                    // we get the predicted group
                     let remaining = self.scanner.remaining();
                     let data = &remaining[..end_slice];
                     let new_forecast = Peeking {
-                        start,
-                        end,
+                        start_element_size: start,
+                        end_element_size: end,
                         data,
                         end_slice,
                     };
                     match &result {
-                        // si l'on n'a encore rien prédit du tout
+                        // if we have not predicted anything yet
                         None => {
-                            // le groupe trouvé devient le résultat
+                            // the group found becomes the result
                             result = Some(new_forecast);
                         }
-                        // s'il y a déjà une prédiction
+                        // if there is already a prediction
                         Some(min_forecast) => {
-                            // on compare la taille du groupe trouvé par rapport
-                            // à celui déjà trouvé
+                            // we compare the size of the group found with the
+                            // one already found
                             if new_forecast.data.len() < min_forecast.data.len() {
-                                // il devient alors le nouveau groupe prédit
+                                // it becomes the new predicted group
                                 result = Some(new_forecast);
                             }
                         }
                     }
                 }
-                // si la prédiction échoue, on ne fait rien
+                // if the prediction fails, we do nothing
                 PeekResult::NotFound => {}
             }
         }
