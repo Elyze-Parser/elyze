@@ -69,13 +69,6 @@ impl<'a, T> Peeking<'a, T> {
     pub fn peeked_slice(&self) -> &'a [T] {
         &self.data[self.start_element_size..self.end_slice - self.end_element_size]
     }
-
-    /// Get the data that was peeked.
-    ///
-    /// Returns a reference to the underlying data that was peeked.
-    pub fn data(&self) -> &'a [T] {
-        self.data
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -126,7 +119,7 @@ pub enum PeekResult {
 /// or an `Err` otherwise.
 pub fn peek<'a, T, P: Peekable<'a, T>>(
     peekable: P,
-    scanner: &mut Scanner<'a, T>,
+    scanner: &Scanner<'a, T>,
 ) -> ParseResult<Option<Peeking<'a, T>>> {
     let source_cursor = scanner.current_position();
     match peekable.peek(scanner)? {
@@ -143,10 +136,7 @@ pub fn peek<'a, T, P: Peekable<'a, T>>(
                 data,
             }))
         }
-        PeekResult::NotFound => {
-            scanner.jump_to(source_cursor);
-            Ok(None)
-        }
+        PeekResult::NotFound => Ok(None),
     }
 }
 
@@ -203,7 +193,7 @@ where
             match self.element.clone().recognize(&mut scanner) {
                 Ok(Some(element)) => {
                     return Ok(PeekResult::Found {
-                        end_slice: scanner.current_position() - self.element.size(),
+                        end_slice: scanner.current_position(),
                         start_element_size: 0,
                         end_element_size: element.size(),
                     });
@@ -248,7 +238,7 @@ mod tests {
         let peeked = peek(token, &mut scanner)
             .expect("failed to parse")
             .expect("failed to peek");
-        assert_eq!(peeked.data(), "abc".as_bytes());
+        assert_eq!(peeked.peeked_slice(), "abc".as_bytes());
     }
 
     #[test]
@@ -259,6 +249,6 @@ mod tests {
         let peeked = peek(token, &mut scanner)
             .expect("failed to parse")
             .expect("failed to peek");
-        assert_eq!(peeked.data, "abc|fdgf".as_bytes());
+        assert_eq!(peeked.peeked_slice(), "abc|fdgf".as_bytes());
     }
 }

@@ -91,7 +91,7 @@ mod tests {
             .peek()
             .expect("failed to parse")
             .expect("failed to peek");
-        assert_eq!(result.data, "data".as_bytes());
+        assert_eq!(result.peeked_slice(), "data".as_bytes());
 
         let data = b"data";
         let scanner = Scanner::new(data);
