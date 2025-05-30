@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-05-30
+
+### Changed
+
+- Bump to 1.1.0
+- Blanket implementation of Visitor on Defaulted Recognizable
+- Update changelog
+
+### Fixed
+
+- Recognizer doesn't propagate the previous state in case of empty scanner after successful match
+
 ## [1.0.7] - 2025-05-29
 
 ### Changed
@@ -148,6 +160,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial commit
 
+[1.1.0]: https://github.com/Elyze-Parser/elyze/compare/v1.0.7..v1.1.0
 [1.0.7]: https://github.com/Elyze-Parser/elyze/compare/v1.0.6..v1.0.7
 [1.0.6]: https://github.com/Elyze-Parser/elyze/compare/v1.0.5..v1.0.6
 [1.0.5]: https://github.com/Elyze-Parser/elyze/compare/v1.0.4..v1.0.5
