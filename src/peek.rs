@@ -287,8 +287,11 @@ impl<'a, T, V: Peekable<'a, T>> Peekable<'a, T> for Last<'a, T, V> {
                 inner_scanner.bump_by(*end_slice);
                 state = peeked;
             } else {
-                // The pattern was not found
-                return Ok(PeekResult::NotFound);
+                if PeekResult::NotFound == state {
+                    // The pattern was not found
+                    return Ok(PeekResult::NotFound);
+                }
+                break;
             }
         }
 
