@@ -3,6 +3,7 @@
 use crate::errors::{ParseError, ParseResult};
 use crate::matcher::Match;
 use crate::scanner::Scanner;
+use crate::visitor::Visitor;
 
 /// A trait that defines how to recognize an object.
 ///
@@ -220,6 +221,21 @@ impl<'a, 'b, T, R: Recognizable<'a, T, R>> Recognizer<'a, 'b, T, R> {
     /// `U` that was recognized. Otherwise, returns `None`.
     pub fn finish(self) -> Option<R> {
         self.data
+    }
+}
+
+/// Allow a `Recognizable` to be used as a `Visitor`.
+///
+/// # Type Parameters
+///
+/// * `T` - The type of the data to scan.
+/// * `'a` - The lifetime of the data to scan.
+/// * `'b` - The lifetime of the `Scanner`.
+///
+impl<'a, T, R: Recognizable<'a, T, R> + Default> Visitor<'a, T> for R {
+    fn accept(scanner: &mut Scanner<'a, T>) -> ParseResult<Self> {
+        recognize(R::default(), scanner)?;
+        Ok(R::default())
     }
 }
 

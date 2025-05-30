@@ -1,31 +1,49 @@
+use elyze::errors::ParseResult;
 use elyze::matcher::Match;
+use elyze::recognizer::Recognizer;
 use elyze::scanner::Scanner;
 
-// define a structure to implement the `Match` trait
-struct Hello;
+#[derive(Debug)]
+enum Operator {
+    Add,
+    Sub,
+}
 
-// implement the `Match` trait
-impl Match<u8> for Hello {
-    fn is_matching(&self, data: &[u8]) -> (bool, usize) {
-        // define the pattern to match
-        let pattern = b"hello";
-        // check if the subslice of data matches the pattern
-        (&data[..pattern.len()] == pattern, pattern.len())
-    }
-
-    fn size(&self) -> usize {
-        5
+fn match_char(c: char, data: &[u8]) -> (bool, usize) {
+    match data.first() {
+        Some(&d) => (d == c as u8, 1),
+        None => (false, 0),
     }
 }
 
-fn main() {
-    let mut scanner = Scanner::new(b"hello world");
-    let (found, size) = Hello.is_matching(scanner.remaining());
-    if !found {
-        println!("not found");
-        return;
+impl Match<u8> for Operator {
+    fn is_matching(&self, data: &[u8]) -> (bool, usize) {
+        match self {
+            Operator::Add => match_char('+', data),
+            Operator::Sub => match_char('-', data),
+        }
     }
-    let data = &scanner.remaining()[..size];
-    scanner.bump_by(size);
-    println!("found: {:?}", String::from_utf8_lossy(data));
+
+    fn size(&self) -> usize {
+        match self {
+            Operator::Add => 1,
+            Operator::Sub => 1,
+        }
+    }
+}
+
+fn main() -> ParseResult<()> {
+    let data = b"+";
+    let mut scanner = Scanner::new(data);
+    // Initialize the recognizer
+    let recognizer = Recognizer::new(&mut scanner);
+    // Try to apply the recognizer on the operator add, if it fails, return an error
+    let recognizer_add = recognizer.try_or(Operator::Add)?;
+    // Try to apply the recognizer on the operator sub, if it fails, return an error
+    let recognizer_add_and_sub = recognizer_add.try_or(Operator::Sub)?;
+    // Finish the recognizer
+    let result = recognizer_add_and_sub.finish();
+    dbg!(result);
+
+    Ok(())
 }
