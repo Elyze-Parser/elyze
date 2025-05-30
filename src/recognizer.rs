@@ -151,10 +151,10 @@ impl<'a, T, M: Match<T>> Recognizable<'a, T, M> for M {
 /// * `T` - The type of the data to scan.
 /// * `U` - The type of the value to recognize.
 /// * `'a` - The lifetime of the data to scan.
-/// * `'container` - The lifetime of the `Recognizer`.
-pub struct Recognizer<'a, 'container, T, U> {
-    data: Option<U>,
-    scanner: &'container mut Scanner<'a, T>,
+/// * `'b` - The lifetime of the `Scanner`.
+pub struct Recognizer<'a, 'b, T, R> {
+    data: Option<R>,
+    scanner: &'b mut Scanner<'a, T>,
 }
 
 impl<'a, 'b, T, R: Recognizable<'a, T, R>> Recognizer<'a, 'b, T, R> {
@@ -188,16 +188,22 @@ impl<'a, 'b, T, R: Recognizable<'a, T, R>> Recognizer<'a, 'b, T, R> {
     /// returns the current recognizer with the current position of the scanner
     /// rewound to the position at which the `U` was attempted, and `data` is left
     /// `None`.
-    pub fn try_or(mut self, element: R) -> ParseResult<Recognizer<'a, 'b, T, R>> {
+    pub fn try_or(mut self, element: R) -> ParseResult<Self> {
+        // Propagate result
+        if self.data.is_some() {
+            return Ok(self);
+        }
+
         // Check if the scanner is empty
         if self.scanner.is_empty() {
             return Err(ParseError::UnexpectedEndOfInput);
         }
 
-        // Propagate result
-        if self.data.is_some() {
+        // If remaining data is not enough, skip
+        if element.size() > self.scanner.remaining().len() {
             return Ok(self);
         }
+
         // Or apply current recognizer
         if let Some(found) = element.recognize(self.scanner)? {
             self.data = Some(found);
