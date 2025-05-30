@@ -97,6 +97,19 @@ pub enum PeekResult {
     NotFound,
 }
 
+impl<'a, T> From<Option<Peeking<'a, T>>> for PeekResult {
+    fn from(peeking: Option<Peeking<'a, T>>) -> PeekResult {
+        match peeking {
+            None => PeekResult::NotFound,
+            Some(peeking) => PeekResult::Found {
+                end_slice: peeking.end_slice,
+                start_element_size: peeking.start_element_size,
+                end_element_size: peeking.end_element_size,
+            },
+        }
+    }
+}
+
 //------------------------------------------------------------------------------
 // PeekSize
 //------------------------------------------------------------------------------
@@ -151,7 +164,7 @@ pub fn peek<'a, T, P: Peekable<'a, T>>(
 }
 
 /// Make Peekable any Visitor implementing the PeekSize trait
-impl<'a, T, V: Visitor<'a, T> + Clone + PeekSize> Peekable<'a, T> for V {
+impl<'a, T, V: Visitor<'a, T> + PeekSize> Peekable<'a, T> for V {
     fn peek(&self, data: &Scanner<'a, T>) -> ParseResult<PeekResult> {
         // create a temporary scanner to peek data
         let remaining = &data.data()[data.current_position()..];
@@ -205,7 +218,7 @@ impl<'a, T, V> Until<'a, T, V> {
 /// Implement PeekSize for Until
 impl<'a, T, V> PeekSize for Until<'a, T, V>
 where
-    V: Visitor<'a, T> + Clone + Match<T>,
+    V: Visitor<'a, T> + Match<T>,
 {
     fn peek_size(&self) -> usize {
         self.element.size()
