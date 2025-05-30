@@ -7,6 +7,7 @@ use crate::errors::ParseResult;
 use crate::matcher::Match;
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
+use std::fmt::Debug;
 use std::marker::PhantomData;
 //------------------------------------------------------------------------------
 // Peekable
@@ -245,10 +246,79 @@ impl<'a, T, V: Visitor<'a, T>> Visitor<'a, T> for Until<'a, T, V> {
 #[derive(Default)]
 pub struct UntilEnd<T>(PhantomData<T>);
 
+//------------------------------------------------------------------------------
+// Last implementation
+//------------------------------------------------------------------------------
+
+#[derive(Clone)]
+pub struct Last<'a, T, V> {
+    element: V,
+    _marker: PhantomData<&'a T>,
+}
+
+/// Construct a new `Last`
+impl<'a, T, V: Peekable<'a, T>> Last<'a, T, V> {
+    pub fn new(element: V) -> Last<'a, T, V> {
+        Last {
+            element,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'a, T, V: Peekable<'a, T>> Peekable<'a, T> for Last<'a, T, V> {
+    fn peek(&self, scanner: &Scanner<'a, T>) -> ParseResult<PeekResult> {
+        let mut state = PeekResult::NotFound;
+        let mut inner_scanner = Scanner::new(scanner.remaining());
+        let mut positions = vec![];
+        // Loop until the scanner is empty
+        loop {
+            // If the scanner is empty, break
+            if inner_scanner.is_empty() {
+                break;
+            }
+            // Peek the element
+            let peeked = self.element.peek(&inner_scanner)?;
+
+            // If the pattern was found, add the end slice to the positions
+            // and advance the scanner by the end slice
+            if let PeekResult::Found { end_slice, .. } = &peeked {
+                positions.push(*end_slice);
+                inner_scanner.bump_by(*end_slice);
+                state = peeked;
+            } else {
+                // The pattern was not found
+                return Ok(PeekResult::NotFound);
+            }
+        }
+
+        // Recalculate the end slice from relative positions
+        if let PeekResult::Found { end_slice, .. } = &mut state {
+            // If there are no positions, the pattern was not found
+            if positions.is_empty() {
+                return Ok(PeekResult::NotFound);
+            }
+
+            // If there is only one position, it is the end slice
+            if positions.len() == 1 {
+                *end_slice = positions[0];
+                return Ok(state);
+            }
+
+            // If there are multiple positions, the end slice is the sum of the
+            // previous end slices
+            let previous_end_slice = &positions[..positions.len() - 1].iter().sum();
+            *end_slice += previous_end_slice;
+        }
+
+        Ok(state)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::bytes::token::Token;
-    use crate::peek::{peek, Until, UntilEnd};
+    use crate::peek::{peek, Last, Until, UntilEnd};
 
     #[test]
     fn test_until() {
@@ -270,5 +340,38 @@ mod tests {
             .expect("failed to parse")
             .expect("failed to peek");
         assert_eq!(peeked.peeked_slice(), "abc|fdgf".as_bytes());
+    }
+
+    #[test]
+    fn test_last() {
+        let data = b"abc|def|ghi|";
+        let mut scanner = crate::scanner::Scanner::new(data);
+        let token = Last::new(Token::Pipe);
+        let peeked = peek(token, &mut scanner)
+            .expect("failed to parse")
+            .expect("failed to peek");
+        assert_eq!(peeked.peeked_slice(), "abc|def|ghi".as_bytes());
+
+        let data = b"abc|def|";
+        let mut scanner = crate::scanner::Scanner::new(data);
+        let token = Last::new(Token::Pipe);
+        let peeked = peek(token, &mut scanner)
+            .expect("failed to parse")
+            .expect("failed to peek");
+        assert_eq!(peeked.peeked_slice(), "abc|def".as_bytes());
+
+        let data = b"abc|";
+        let mut scanner = crate::scanner::Scanner::new(data);
+        let token = Last::new(Token::Pipe);
+        let peeked = peek(token, &mut scanner)
+            .expect("failed to parse")
+            .expect("failed to peek");
+        assert_eq!(peeked.peeked_slice(), "abc".as_bytes());
+
+        let data = b"abc";
+        let mut scanner = crate::scanner::Scanner::new(data);
+        let token = Last::new(Token::Pipe);
+        let peeked = peek(token, &mut scanner).expect("failed to parse");
+        assert_eq!(peeked, None);
     }
 }
