@@ -3,10 +3,12 @@
 use crate::bytes::matchers::match_number;
 use crate::errors::ParseResult;
 use crate::matcher::Match;
+use crate::peek::PeekSize;
 use crate::recognizer::recognize_slice;
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
 
+#[derive(Default)]
 pub struct TokenNumber;
 
 /// Implement the `Match` trait for the token number.
@@ -17,6 +19,12 @@ impl Match<u8> for TokenNumber {
 
     fn size(&self) -> usize {
         0
+    }
+}
+
+impl PeekSize for TokenNumber {
+    fn peek_size(&self) -> usize {
+        self.size()
     }
 }
 

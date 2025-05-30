@@ -1,4 +1,5 @@
 use crate::errors::{ParseError, ParseResult};
+use crate::peek::{peek, Last, Peekable};
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
 use std::marker::PhantomData;
@@ -114,6 +115,49 @@ where
             separator: PhantomData,
         })
     }
+}
+
+/// Return a scanner without the trailing separator.
+///
+/// # Arguments
+///
+/// * `element` - The peekable element.
+/// * `separator` - The peekable separator.
+/// * `scanner` - The scanner.
+///
+/// # Returns
+///
+/// A `ParseResult` containing a `Scanner` without the trailing separator.
+pub fn get_scanner_without_trailing_separator<'a, T, P1, P2>(
+    element: P1,
+    separator: P2,
+    scanner: &Scanner<'a, T>,
+) -> ParseResult<Scanner<'a, T>>
+where
+    P1: Peekable<'a, T>,
+    P2: Peekable<'a, T>,
+{
+    let result_last_element = peek(Last::new(element), scanner)?;
+
+    // It seemingly a 0-element list
+    let Some(result_last_element) = result_last_element else {
+        return Ok(Scanner::new(scanner.remaining()));
+    };
+
+    let result_last_separator = peek(Last::new(separator), &scanner)?;
+
+    // It seemingly a 1-element list
+    let Some(result_last_separator) = result_last_separator else {
+        return Ok(Scanner::new(scanner.remaining()));
+    };
+
+    let mut end_slice = scanner.remaining().len();
+    if result_last_element.end_slice < result_last_separator.end_slice {
+        end_slice -= result_last_separator.end_slice - result_last_separator.peeked_slice().len();
+    }
+
+    let data_scanner = Scanner::new(&scanner.remaining()[..end_slice]);
+    Ok(data_scanner)
 }
 
 #[cfg(test)]
