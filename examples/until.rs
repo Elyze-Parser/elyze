@@ -3,7 +3,7 @@ use elyze::matcher::Match;
 use elyze::peek::{peek, Until};
 use elyze::scanner::Scanner;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct CloseParentheses;
 
 impl Match<u8> for CloseParentheses {

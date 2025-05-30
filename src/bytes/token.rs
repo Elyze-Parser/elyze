@@ -1,7 +1,12 @@
 //! Classic tokens
 
 use crate::bytes::matchers::{match_char, match_pattern};
+use crate::errors::{ParseError, ParseResult};
 use crate::matcher::Match;
+use crate::peek;
+use crate::recognizer::Recognizer;
+use crate::scanner::Scanner;
+use crate::visitor::Visitor;
 
 #[derive(Copy, Clone)]
 /// The token type
@@ -150,5 +155,49 @@ impl Match<u8> for Token {
             Token::Tab => 1,
             Token::CrLn => 2,
         }
+    }
+}
+
+/// Implement Visitor for Token make it possible to use Token::accept
+///
+/// Make it also usable with [peek::Until]
+impl<'a> Visitor<'a, u8> for Token {
+    fn accept(scanner: &mut Scanner<'a, u8>) -> ParseResult<Self> {
+        Recognizer::new(scanner)
+            .try_or(Token::OpenParen)?
+            .try_or(Token::CloseParen)?
+            .try_or(Token::Comma)?
+            .try_or(Token::Semicolon)?
+            .try_or(Token::Colon)?
+            .try_or(Token::Whitespace)?
+            .try_or(Token::GreaterThan)?
+            .try_or(Token::LessThan)?
+            .try_or(Token::Exclamation)?
+            .try_or(Token::Quote)?
+            .try_or(Token::DoubleQuote)?
+            .try_or(Token::Equal)?
+            .try_or(Token::Plus)?
+            .try_or(Token::Dash)?
+            .try_or(Token::Slash)?
+            .try_or(Token::Star)?
+            .try_or(Token::Percent)?
+            .try_or(Token::Ampersand)?
+            .try_or(Token::Pipe)?
+            .try_or(Token::Caret)?
+            .try_or(Token::Tilde)?
+            .try_or(Token::Dot)?
+            .try_or(Token::Question)?
+            .try_or(Token::At)?
+            .try_or(Token::Hash)?
+            .try_or(Token::Dollar)?
+            .try_or(Token::Backslash)?
+            .try_or(Token::Underscore)?
+            .try_or(Token::Sharp)?
+            .try_or(Token::Ln)?
+            .try_or(Token::Cr)?
+            .try_or(Token::Tab)?
+            .try_or(Token::CrLn)?
+            .finish()
+            .ok_or(ParseError::UnexpectedToken)
     }
 }
