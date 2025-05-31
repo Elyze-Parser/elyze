@@ -3,7 +3,7 @@
 use crate::bytes::matchers::{match_char, match_pattern};
 use crate::errors::{ParseError, ParseResult};
 use crate::matcher::Match;
-use crate::peek::PeekSize;
+use crate::peek::{DefaultPeekableImplementation, PeekableImplementation};
 use crate::recognizer::Recognizer;
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
@@ -202,9 +202,6 @@ impl<'a> Visitor<'a, u8> for Token {
     }
 }
 
-/// Implement PeekSize for Token
-impl PeekSize for Token {
-    fn peek_size(&self) -> usize {
-        self.size()
-    }
+impl PeekableImplementation for Token {
+    type Type = DefaultPeekableImplementation;
 }

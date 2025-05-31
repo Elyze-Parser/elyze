@@ -3,7 +3,7 @@
 use crate::bytes::matchers::match_number;
 use crate::errors::ParseResult;
 use crate::matcher::Match;
-use crate::peek::PeekSize;
+use crate::peek::{DefaultPeekableImplementation, PeekableImplementation};
 use crate::recognizer::recognize_slice;
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
@@ -22,10 +22,8 @@ impl Match<u8> for TokenNumber {
     }
 }
 
-impl PeekSize for TokenNumber {
-    fn peek_size(&self) -> usize {
-        self.size()
-    }
+impl PeekableImplementation for TokenNumber {
+    type Type = DefaultPeekableImplementation;
 }
 
 /// Define how to accept the token number.

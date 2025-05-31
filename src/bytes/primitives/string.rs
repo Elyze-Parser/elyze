@@ -3,6 +3,7 @@
 use crate::bytes::matchers::match_string;
 use crate::errors::ParseResult;
 use crate::matcher::Match;
+use crate::peek::{DefaultPeekableImplementation, PeekableImplementation};
 use crate::recognizer::recognize_slice;
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
@@ -18,6 +19,10 @@ impl Match<u8> for TokenString {
     fn size(&self) -> usize {
         0
     }
+}
+
+impl PeekableImplementation for TokenString {
+    type Type = DefaultPeekableImplementation;
 }
 
 pub struct DataString<T>(pub T);

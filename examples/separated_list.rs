@@ -1,7 +1,7 @@
 use elyze::bytes::primitives::number::{Number, TokenNumber};
 use elyze::bytes::token::Token;
 use elyze::errors::ParseResult;
-use elyze::peek::PeekSize;
+use elyze::peek::{DefaultPeekableImplementation, PeekSize, PeekableImplementation};
 use elyze::recognizer::recognize;
 use elyze::scanner::Scanner;
 use elyze::separated_list::{get_scanner_without_trailing_separator, SeparatedList};
@@ -9,6 +9,10 @@ use elyze::visitor::Visitor;
 
 #[derive(Debug)]
 struct Separator;
+
+impl PeekableImplementation for Separator {
+    type Type = DefaultPeekableImplementation;
+}
 
 impl<'a> Visitor<'a, u8> for Separator {
     fn accept(scanner: &mut Scanner<u8>) -> ParseResult<Self> {
@@ -19,7 +23,7 @@ impl<'a> Visitor<'a, u8> for Separator {
     }
 }
 
-impl PeekSize for Separator {
+impl PeekSize<u8> for Separator {
     fn peek_size(&self) -> usize {
         3
     }

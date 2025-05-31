@@ -116,9 +116,34 @@ impl<'a, T> From<Option<Peeking<'a, T>>> for PeekResult {
 //------------------------------------------------------------------------------
 
 /// A trait that can be used to define a peek size.
-pub trait PeekSize {
+pub trait PeekSize<T> {
     /// The `peek_size` method should return the size of the `Peekable`.
     fn peek_size(&self) -> usize;
+}
+
+/// A default implementation of the `PeekSize` trait for any `Match`.
+impl<T, M: Match<T>> PeekSize<T> for M {
+    fn peek_size(&self) -> usize {
+        self.size()
+    }
+}
+
+//------------------------------------------------------------------------------
+// PeekableImpl
+//------------------------------------------------------------------------------
+
+/// Marker for the default implementation of Peekable trait based on Visitor
+pub struct DefaultPeekableImplementation;
+
+/// Marker for the customized implementation of Peekable trait user defined
+pub struct CustomizedPeekableImplementation;
+
+/// Defines how Peekable should be implemented
+///
+/// [DefaultPeekableImplementation] will use the default implementation
+/// [CustomizedPeekableImplementation] will use the implementation defined by the user
+pub trait PeekableImplementation {
+    type Type;
 }
 
 //------------------------------------------------------------------------------
@@ -165,7 +190,10 @@ pub fn peek<'a, T, P: Peekable<'a, T>>(
 }
 
 /// Make Peekable any Visitor implementing the PeekSize trait
-impl<'a, T, V: Visitor<'a, T> + PeekSize> Peekable<'a, T> for V {
+impl<'a, T, V> Peekable<'a, T> for V
+where
+    V: Visitor<'a, T> + PeekSize<T> + PeekableImplementation<Type = DefaultPeekableImplementation>,
+{
     fn peek(&self, data: &Scanner<'a, T>) -> ParseResult<PeekResult> {
         // create a temporary scanner to peek data
         let remaining = &data.data()[data.current_position()..];
@@ -202,7 +230,7 @@ impl<'a, T, V: Visitor<'a, T> + PeekSize> Peekable<'a, T> for V {
 /// is rewound to the original position and an `Err` is returned.
 #[derive(Clone)]
 pub struct Until<'a, T, V> {
-    element: V,
+    pub element: V,
     _marker: PhantomData<&'a T>,
 }
 
@@ -216,21 +244,16 @@ impl<'a, T, V> Until<'a, T, V> {
     }
 }
 
-/// Implement PeekSize for Until
-impl<'a, T, V> PeekSize for Until<'a, T, V>
-where
-    V: Visitor<'a, T> + Match<T>,
-{
-    fn peek_size(&self) -> usize {
-        self.element.size()
-    }
-}
-
 /// Implement Visitor for Until
 impl<'a, T, V: Visitor<'a, T>> Visitor<'a, T> for Until<'a, T, V> {
     fn accept(scanner: &mut Scanner<'a, T>) -> ParseResult<Self> {
         Ok(Until::new(V::accept(scanner)?))
     }
+}
+
+/// Implement Peekable for Until for all elements that implements Visitor
+impl<'a, T, V> PeekableImplementation for Until<'a, T, V> {
+    type Type = DefaultPeekableImplementation;
 }
 
 //------------------------------------------------------------------------------
@@ -252,7 +275,7 @@ pub struct UntilEnd<T>(PhantomData<T>);
 
 #[derive(Clone)]
 pub struct Last<'a, T, V> {
-    element: V,
+    pub element: V,
     _marker: PhantomData<&'a T>,
 }
 
@@ -266,7 +289,13 @@ impl<'a, T, V: Peekable<'a, T>> Last<'a, T, V> {
     }
 }
 
-impl<'a, T, V: Peekable<'a, T>> Peekable<'a, T> for Last<'a, T, V> {
+/// Implement Peekable for Last for all elements implementing Peekable
+///
+/// Because Last doesn't implement PeekableImplementation<Type = DefaultPeekableImplementation>>
+/// there is no conflict
+impl<'a, T, V: Peekable<'a, T> + PeekableImplementation<Type = DefaultPeekableImplementation>>
+    Peekable<'a, T> for Last<'a, T, V>
+{
     fn peek(&self, scanner: &Scanner<'a, T>) -> ParseResult<PeekResult> {
         let mut state = PeekResult::NotFound;
         let mut inner_scanner = Scanner::new(scanner.remaining());

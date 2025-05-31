@@ -1,6 +1,6 @@
 use elyze::errors::ParseResult;
 use elyze::matcher::Match;
-use elyze::peek::{peek, Until};
+use elyze::peek::{peek, DefaultPeekableImplementation, Last, PeekableImplementation};
 use elyze::scanner::Scanner;
 
 #[derive(Default)]
@@ -20,24 +20,22 @@ impl Match<u8> for CloseParentheses {
     }
 }
 
+impl PeekableImplementation for CloseParentheses {
+    type Type = DefaultPeekableImplementation;
+}
+
 fn main() -> ParseResult<()> {
-    let data = b"7 * ( 1 + 2 )";
+    let data = b"8 / ( 7 * ( 1 + 2 ) )";
     let mut scanner = Scanner::new(data);
-    scanner.bump_by(5); // consumes : 7 * (
-    let result = peek(Until::new(CloseParentheses), &scanner)?;
+    // consumes : "8 / ( " to reach the start of the enclosed data
+    scanner.bump_by(b"8 / (".len());
+    let result = peek(Last::new(CloseParentheses), &scanner)?;
     if let Some(peeking) = result {
         println!(
             "{:?}",
-            // the peek_slice method returns the slice of recognized without the end element
-            String::from_utf8_lossy(peeking.peeked_slice()) // 1 + 2
+            // the peek_slice method returns the all enclosed data
+            String::from_utf8_lossy(peeking.peeked_slice()) //  7 * ( 1 + 2 )
         );
-    } else {
-        println!("not found");
     }
-    println!(
-        "scanner: {:?}",
-        // the scanner itself remains unchanged
-        String::from_utf8_lossy(scanner.remaining()) // scanner: " 1 + 2 )"
-    );
     Ok(())
 }
