@@ -218,45 +218,6 @@ where
 }
 
 //------------------------------------------------------------------------------
-// Until implementations
-//------------------------------------------------------------------------------
-
-/// A `Peekable` that peeks until the given `element` is found in the
-/// `Scanner`.
-///
-/// This `Peekable` will temporarily advance the position of the `Scanner` to
-/// find a match. If a match is found, the `Scanner` is rewound to the original
-/// position and a `PeekResult` is returned. If no match is found, the `Scanner`
-/// is rewound to the original position and an `Err` is returned.
-#[derive(Clone)]
-pub struct Until<'a, T, V> {
-    pub element: V,
-    _marker: PhantomData<&'a T>,
-}
-
-/// Construct a new `Until`
-impl<'a, T, V> Until<'a, T, V> {
-    pub fn new(element: V) -> Until<'a, T, V> {
-        Until {
-            element,
-            _marker: PhantomData,
-        }
-    }
-}
-
-/// Implement Visitor for Until
-impl<'a, T, V: Visitor<'a, T>> Visitor<'a, T> for Until<'a, T, V> {
-    fn accept(scanner: &mut Scanner<'a, T>) -> ParseResult<Self> {
-        Ok(Until::new(V::accept(scanner)?))
-    }
-}
-
-/// Implement Peekable for Until for all elements that implements Visitor
-impl<'a, T, V> PeekableImplementation for Until<'a, T, V> {
-    type Type = DefaultPeekableImplementation;
-}
-
-//------------------------------------------------------------------------------
 // UntilEnd implementations
 //------------------------------------------------------------------------------
 
@@ -350,14 +311,13 @@ impl<'a, T, V: Peekable<'a, T> + PeekableImplementation<Type = DefaultPeekableIm
 #[cfg(test)]
 mod tests {
     use crate::bytes::token::Token;
-    use crate::peek::{peek, Last, Until, UntilEnd};
+    use crate::peek::{peek, Last, UntilEnd};
 
     #[test]
     fn test_until() {
         let data = b"abc|fdgf";
         let mut scanner = crate::scanner::Scanner::new(data);
-        let token = Until::new(Token::Pipe);
-        let peeked = peek(token, &mut scanner)
+        let peeked = peek(Token::Pipe, &mut scanner)
             .expect("failed to parse")
             .expect("failed to peek");
         assert_eq!(peeked.peeked_slice(), "abc".as_bytes());

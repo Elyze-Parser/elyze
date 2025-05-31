@@ -1,6 +1,6 @@
 use elyze::errors::ParseResult;
 use elyze::matcher::Match;
-use elyze::peek::{peek, Until};
+use elyze::peek::{peek, DefaultPeekableImplementation, PeekableImplementation};
 use elyze::scanner::Scanner;
 
 #[derive(Default)]
@@ -20,11 +20,15 @@ impl Match<u8> for CloseParentheses {
     }
 }
 
+impl PeekableImplementation for CloseParentheses {
+    type Type = DefaultPeekableImplementation;
+}
+
 fn main() -> ParseResult<()> {
     let data = b"7 * ( 1 + 2 )";
     let mut scanner = Scanner::new(data);
     scanner.bump_by(5); // consumes : 7 * (
-    let result = peek(Until::new(CloseParentheses), &scanner)?;
+    let result = peek(CloseParentheses, &scanner)?;
     if let Some(peeking) = result {
         println!(
             "{:?}",

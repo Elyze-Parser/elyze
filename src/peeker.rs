@@ -76,7 +76,7 @@ impl<'a, T> Peeker<'a, '_, T> {
 #[cfg(test)]
 mod tests {
     use crate::bytes::token::Token;
-    use crate::peek::{Until, UntilEnd};
+    use crate::peek::UntilEnd;
     use crate::peeker::Peeker;
     use crate::scanner::Scanner;
 
@@ -85,7 +85,7 @@ mod tests {
         let data = b"data\n";
         let scanner = Scanner::new(data);
         let peeker = Peeker::new(&scanner)
-            .add_peekable(Until::new(Token::Ln))
+            .add_peekable(Token::Ln)
             .add_peekable(UntilEnd::default());
         let result = peeker
             .peek()
@@ -96,7 +96,7 @@ mod tests {
         let data = b"data";
         let scanner = Scanner::new(data);
         let peeker = Peeker::new(&scanner)
-            .add_peekable(Until::new(Token::Ln))
+            .add_peekable(Token::Ln)
             .add_peekable(UntilEnd::default());
         let result = peeker
             .peek()

@@ -1,6 +1,8 @@
 use elyze::errors::{ParseError, ParseResult};
 use elyze::matcher::Match;
-use elyze::peek::{peek, PeekResult, Peekable, Until};
+use elyze::peek::{
+    peek, DefaultPeekableImplementation, PeekResult, Peekable, PeekableImplementation,
+};
 use elyze::peeker::Peeker;
 use elyze::recognizer::Recognizer;
 use elyze::scanner::Scanner;
@@ -41,13 +43,17 @@ impl<'a> Visitor<'a, u8> for OperatorTokens {
     }
 }
 
+impl PeekableImplementation for OperatorTokens {
+    type Type = DefaultPeekableImplementation;
+}
+
 struct FirstOperator;
 
 impl<'a> Peekable<'a, u8> for FirstOperator {
     fn peek(&self, scanner: &Scanner<'a, u8>) -> ParseResult<PeekResult> {
         Peeker::new(scanner)
-            .add_peekable(Until::new(OperatorTokens::Plus))
-            .add_peekable(Until::new(OperatorTokens::Times))
+            .add_peekable(OperatorTokens::Plus)
+            .add_peekable(OperatorTokens::Times)
             .peek()
             .map(Into::into)
     }
