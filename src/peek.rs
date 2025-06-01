@@ -196,8 +196,7 @@ where
 {
     fn peek(&self, data: &Scanner<'a, T>) -> ParseResult<PeekResult> {
         // create a temporary scanner to peek data
-        let remaining = &data.data()[data.current_position()..];
-        let mut scanner = Scanner::new(remaining);
+        let mut scanner = Scanner::new(data.remaining());
         while !scanner.is_empty() {
             match V::accept(&mut scanner) {
                 Ok(element) => {
@@ -254,9 +253,7 @@ impl<'a, T, V: Peekable<'a, T>> Last<'a, T, V> {
 ///
 /// Because Last doesn't implement PeekableImplementation<Type = DefaultPeekableImplementation>>
 /// there is no conflict
-impl<'a, T, V: Peekable<'a, T> + PeekableImplementation<Type = DefaultPeekableImplementation>>
-    Peekable<'a, T> for Last<'a, T, V>
-{
+impl<'a, T, V: Peekable<'a, T>> Peekable<'a, T> for Last<'a, T, V> {
     fn peek(&self, scanner: &Scanner<'a, T>) -> ParseResult<PeekResult> {
         let mut state = PeekResult::NotFound;
         let mut inner_scanner = Scanner::new(scanner.remaining());

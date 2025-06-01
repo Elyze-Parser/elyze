@@ -3,8 +3,8 @@
 use crate::bytes::matchers::{match_char, match_pattern};
 use crate::errors::{ParseError, ParseResult};
 use crate::matcher::Match;
-use crate::peek::{DefaultPeekableImplementation, PeekableImplementation};
-use crate::recognizer::Recognizer;
+use crate::peek::{CustomizedPeekableImplementation, PeekResult, Peekable, PeekableImplementation};
+use crate::recognizer::{recognize, Recognizer};
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
 
@@ -203,5 +203,31 @@ impl<'a> Visitor<'a, u8> for Token {
 }
 
 impl PeekableImplementation for Token {
-    type Type = DefaultPeekableImplementation;
+    type Type = CustomizedPeekableImplementation;
+}
+
+impl<'a> Peekable<'a, u8> for Token {
+    fn peek(&self, data: &Scanner<'a, u8>) -> ParseResult<PeekResult> {
+        // create a temporary scanner to peek data
+        let mut scanner = Scanner::new(data.remaining());
+        while !scanner.is_empty() {
+            match recognize(*self, &mut scanner) {
+                Ok(element) => {
+                    return Ok(PeekResult::Found {
+                        end_slice: scanner.current_position(),
+                        start_element_size: 0,
+                        end_element_size: element.size(),
+                    });
+                }
+                Err(ParseError::UnexpectedToken) => {
+                    scanner.bump_by(1);
+                    continue;
+                }
+                Err(err) => {
+                    return Err(err);
+                }
+            }
+        }
+        Ok(PeekResult::NotFound)
+    }
 }
