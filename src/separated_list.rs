@@ -1,7 +1,8 @@
 use crate::errors::{ParseError, ParseResult};
-use crate::peek::{peek, DefaultPeekableImplementation, Last, Peekable, PeekableImplementation};
+use crate::peek::{peek, Last, Peekable};
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
 #[derive(Debug)]
@@ -134,8 +135,8 @@ pub fn get_scanner_without_trailing_separator<'a, T, P1, P2>(
     scanner: &Scanner<'a, T>,
 ) -> ParseResult<Scanner<'a, T>>
 where
-    P1: Peekable<'a, T> + PeekableImplementation<Type = DefaultPeekableImplementation>,
-    P2: Peekable<'a, T> + PeekableImplementation<Type = DefaultPeekableImplementation>,
+    P1: Peekable<'a, T>,
+    P2: Peekable<'a, T>,
 {
     let result_last_element = peek(Last::new(element), scanner)?;
 

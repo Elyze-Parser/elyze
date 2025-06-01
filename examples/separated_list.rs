@@ -31,6 +31,7 @@ impl PeekSize<u8> for Separator {
 
 #[derive(Debug)]
 struct NumberList {
+    #[allow(dead_code)]
     data: Vec<usize>,
 }
 

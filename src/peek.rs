@@ -3,7 +3,7 @@
 //! A `Peekable` is a type that can be used to peek at the current position of a
 //! `Scanner` without advancing the scanner.
 
-use crate::errors::ParseResult;
+use crate::errors::{ParseError, ParseResult};
 use crate::matcher::Match;
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;
@@ -118,7 +118,9 @@ impl<'a, T> From<Option<Peeking<'a, T>>> for PeekResult {
 /// A trait that can be used to define a peek size.
 pub trait PeekSize<T> {
     /// The `peek_size` method should return the size of the `Peekable`.
-    fn peek_size(&self) -> usize;
+    fn peek_size(&self) -> usize {
+        0
+    }
 }
 
 /// A default implementation of the `PeekSize` trait for any `Match`.
@@ -206,6 +208,9 @@ where
                         end_element_size: element.peek_size(),
                     });
                 }
+                Err(ParseError::UnexpectedToken) => {
+                    return Err(ParseError::UnexpectedToken);
+                }
                 Err(_err) => {
                     scanner.bump_by(1);
                     continue;
@@ -265,7 +270,18 @@ impl<'a, T, V: Peekable<'a, T>> Peekable<'a, T> for Last<'a, T, V> {
                 break;
             }
             // Peek the element
-            let peeked = self.element.peek(&inner_scanner)?;
+            let peeked = self.element.peek(&inner_scanner);
+
+            let peeked = match peeked {
+                Ok(peeked) => peeked,
+                Err(ParseError::UnexpectedToken) => {
+                    inner_scanner.bump_by(1);
+                    continue;
+                }
+                Err(err) => {
+                    return Err(err);
+                }
+            };
 
             // If the pattern was found, add the end slice to the positions
             // and advance the scanner by the end slice

@@ -68,7 +68,7 @@ fn main() -> ParseResult<()> {
     let mut scanner = Scanner::new(data);
     // Initialize the recognizer
     let result = OperatorData::accept(&mut scanner);
-    dbg!(result); // Err(UnexpectedToken)
+    assert!(matches!(result, Err(ParseError::UnexpectedToken))); // Err(UnexpectedToken)
 
     Ok(())
 }
