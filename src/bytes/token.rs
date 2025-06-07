@@ -147,7 +147,7 @@ impl Match<u8> for Token {
             Token::At => 1,
             Token::Hash => 1,
             Token::Dollar => 1,
-            Token::Backslash => 1,
+            Token::Backslash => 2,
             Token::Underscore => 1,
             Token::Sharp => 1,
             Token::Ln => 1,
