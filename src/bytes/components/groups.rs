@@ -80,7 +80,8 @@ where
     match peek(start, scanner)? {
         Some(peeking) => {
             scanner.bump_by(peeking.end_slice);
-            let rewind_scanner = scanner.clone();
+            let mut rewind_scanner = scanner.clone();
+            rewind_scanner.rewind(start.size());
             // if start group token increment balancing counter
             if !is_escaped(rewind_scanner, escape_token)? {
                 *balance += 1
@@ -95,12 +96,13 @@ where
         // if end group token decrement balancing counter
         Some(peeking) => {
             scanner.bump_by(peeking.end_slice);
-            let rewind_scanner = scanner.clone();
+            let mut rewind_scanner = scanner.clone();
+            rewind_scanner.rewind(end.size());
             if is_escaped(rewind_scanner, escape_token)? {
                 return Ok(());
             }
 
-            *balance -= 1
+            *balance -= 1;
         }
         // if neither, move by one byte
         None => {
@@ -147,9 +149,13 @@ where
         // 0 if number of start token equals number of end token
         // i.e: ( 5 + 3 - ( 10 * 8 ) ) => 2 "(" and 2 ")" => balanced
         //      ( 5 + 3 - ( 10 * 8 )   => 2 "(" and 1 ")" => unbalanced
-        let mut balance = 0;
+        let mut balance = 1;
 
         let mut scanner = Scanner::new(input);
+
+        if start.recognize(&mut scanner)?.is_none() {
+            return Ok(PeekResult::NotFound);
+        }
 
         loop {
             match_for_balanced_group(&mut scanner, &mut balance, start, end, escape_token)?;
@@ -215,21 +221,18 @@ where
         if token.recognize(&mut scanner)?.is_none() {
             return Ok(PeekResult::NotFound);
         }
-        // Advance the scanner by the size of the recognized token
-        scanner.bump_by(token.size());
 
         // This flag indicates whether the prediction was successful
         let mut found = false;
-
         // While there are still bytes in the input
         while !scanner.remaining().is_empty() {
             // If the token is recognized somewhere in the input
-
             match peek(token, &mut scanner)? {
                 Some(peeking) => {
-                    let rewind_scanner = Scanner::new(peeking.peeked_slice());
-                    // Advance the scanner by the size of the peeked token
                     scanner.bump_by(peeking.end_slice);
+                    let mut rewind_scanner = scanner.clone();
+                    rewind_scanner.rewind(token.size());
+                    // Advance the scanner by the size of the peeked token
                     // If the token is escaped
                     if is_escaped(rewind_scanner, escape_token)? {
                         // Advance the scanner by one byte
@@ -237,6 +240,7 @@ where
                         continue;
                     }
                     found = true;
+                    break;
                 }
                 None => break,
             };
@@ -299,14 +303,16 @@ impl<'a> Peekable<'a, u8> for GroupKind {
 mod tests {
     use crate::bytes::components::groups::{match_for_delimited_group, match_group, GroupKind};
     use crate::bytes::token::Token;
+    use crate::errors::ParseResult;
     use crate::peek::{peek, PeekResult, Peeking};
     use crate::scanner::Scanner;
 
     #[test]
     fn test_match_group() {
-        let data = b"( 5 + 3 - ( 10 * 8 ) \\)) + 54";
-        let result = match_group(Token::OpenParen, Token::CloseParen, Token::Backslash)(data)
-            .expect("failed to parse");
+        let data = "( 5 + 3 - ( 10 * 8 ) \\)) + 54";
+        let result =
+            match_group(Token::OpenParen, Token::CloseParen, Token::Backslash)(data.as_bytes())
+                .expect("failed to parse");
         assert_eq!(
             result,
             PeekResult::Found {
@@ -315,7 +321,28 @@ mod tests {
                 end_element_size: 1
             }
         );
-        assert_eq!(&data[..24], b"( 5 + 3 - ( 10 * 8 ) \\))");
+        assert_eq!(&data[..24].as_bytes(), b"( 5 + 3 - ( 10 * 8 ) \\))");
+    }
+
+    #[test]
+    fn test_match_group2() -> ParseResult<()> {
+        let data = "( 5 + 3 - \\( ( 10 * 8 \\)) \\)) + 54";
+        let mut tokenizer = Scanner::new(data.as_bytes());
+        let result = peek(GroupKind::Parenthesis, &mut tokenizer)?;
+
+        if let Some(peeked) = result {
+            assert_eq!(peeked.peeked_slice(), b" 5 + 3 - \\( ( 10 * 8 \\)) \\)");
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_non_match_group() {
+        let data = "4 + ( 5 + 3 - ( 10 * 8 ) \\)) + 54";
+        let result =
+            match_group(Token::OpenParen, Token::CloseParen, Token::Backslash)(data.as_bytes())
+                .expect("failed to parse");
+        assert_eq!(result, PeekResult::NotFound);
     }
 
     #[test]
@@ -333,6 +360,39 @@ mod tests {
             })
         );
         assert_eq!(&data[..22], b"( 5 + 3 - ( 10 * 8 ) )");
+    }
+
+    #[test]
+    fn test_match_group_delimited2() {
+        let data = b"( 5 + 3 - ( 10 * 8 ) ) + 54";
+        let mut tokenizer = Scanner::new(data);
+        let result = peek(GroupKind::Parenthesis, &mut tokenizer).expect("failed to parse");
+
+        if let Some(peeked) = result {
+            assert_eq!(peeked.peeked_slice(), b" 5 + 3 - ( 10 * 8 ) ");
+        }
+    }
+
+    #[test]
+    fn test_match_quotes2() {
+        let data = b"'hello world' data";
+        let mut tokenizer = Scanner::new(data);
+        let result = peek(GroupKind::Quotes, &mut tokenizer).expect("failed to parse");
+
+        if let Some(peeked) = result {
+            assert_eq!(peeked.peeked_slice(), b"hello world");
+        }
+    }
+
+    #[test]
+    fn test_match_quotes3() {
+        let data = "'I\\'m a quoted data' - 'yes me too'";
+        let mut tokenizer = Scanner::new(data.as_bytes());
+        let result = peek(GroupKind::Quotes, &mut tokenizer).expect("failed to parse");
+
+        if let Some(peeked) = result {
+            assert_eq!(peeked.peeked_slice(), b"I\\'m a quoted data");
+        }
     }
 
     #[test]
