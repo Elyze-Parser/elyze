@@ -450,5 +450,25 @@ mod tests {
             }
         );
         assert_eq!(&data[..13], r#""hello world""#);
+
+        let data = r#""hello world" data"#;
+        let mut tokenizer = Scanner::new(data.as_bytes());
+        let result = peek(GroupKind::DoubleQuotes, &mut tokenizer).expect("failed to parse");
+
+        if let Some(peeked) = result {
+            assert_eq!(peeked.peeked_slice(), b"hello world");
+        } else {
+            panic!("failed to parse");
+        }
+
+        let data = r#""""#;
+        let mut tokenizer = Scanner::new(data.as_bytes());
+        let result = peek(GroupKind::DoubleQuotes, &mut tokenizer).expect("failed to parse");
+
+        if let Some(peeked) = result {
+            assert_eq!(peeked.peeked_slice(), b"");
+        } else {
+            panic!("failed to parse");
+        }
     }
 }
