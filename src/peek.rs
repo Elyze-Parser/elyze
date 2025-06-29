@@ -208,9 +208,6 @@ where
                         end_element_size: element.peek_size(),
                     });
                 }
-                Err(ParseError::UnexpectedToken) => {
-                    return Err(ParseError::UnexpectedToken);
-                }
                 Err(_err) => {
                     scanner.bump_by(1);
                     continue;
