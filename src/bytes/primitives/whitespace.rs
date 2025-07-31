@@ -17,6 +17,10 @@ impl<'a> Visitor<'a, u8> for Whitespaces {
         let mut found = false;
 
         while Token::Whitespace.recognize(scanner)?.is_some() {
+            if scanner.is_empty() {
+                return Ok(Whitespaces);
+            }
+
             found = true;
         }
         if !found {
@@ -31,7 +35,43 @@ impl<'a> Visitor<'a, u8> for OptionalWhitespaces {
         if scanner.is_empty() {
             return Ok(OptionalWhitespaces);
         }
-        while Token::Whitespace.recognize(scanner)?.is_some() {}
+        while Token::Whitespace.recognize(scanner)?.is_some() {
+            if scanner.is_empty() {
+                return Ok(OptionalWhitespaces);
+            }
+        }
         Ok(OptionalWhitespaces)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    // ensure that the scanner consumes all final whitespaces
+    #[test]
+    fn test_whitespaces() {
+        let mut scanner = Scanner::new(b"         ");
+        let result = Whitespaces::accept(&mut scanner);
+        assert!(result.is_ok());
+        assert!(scanner.is_empty());
+
+        let mut scanner = Scanner::new(b"aaaaaaaaa");
+        let result = Whitespaces::accept(&mut scanner);
+        assert!(!result.is_ok());
+        assert!(!scanner.is_empty());
+    }
+
+    // ensure that the scanner consumes all final optional whitespaces
+    #[test]
+    fn test_optional_whitespaces() {
+        let mut scanner = Scanner::new(b"aaaaaaaaa");
+        let result = OptionalWhitespaces::accept(&mut scanner);
+        assert!(result.is_ok());
+        assert!(!scanner.is_empty());
+
+        let mut scanner = Scanner::new(b"        ");
+        let result = OptionalWhitespaces::accept(&mut scanner);
+        assert!(result.is_ok());
+        assert!(scanner.is_empty());
     }
 }

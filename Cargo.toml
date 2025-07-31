@@ -1,6 +1,6 @@
 [package]
 name = "elyze"
-version = "1.5.4"
+version = "1.5.5"
 edition = "2024"
 homepage = "https://github.com/Elyze-Parser/elyze"
 repository = "https://github.com/Elyze-Parser/elyze"
